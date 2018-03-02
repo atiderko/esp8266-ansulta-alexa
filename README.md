@@ -26,11 +26,13 @@ A cheep solution to control your IKEA OMLOPP and UTRUSTA lights by Amazon's Alex
 1. On first start an AP for web configuration portal is launched with SSID "AnsultaAP". Take your smartphone to connect to this AP. Once connected you can select your WiFi enter password and name for device shown in Alexa.
 2. After the module is successful connected to WiFi you have to push the button (several times if needed) on your Ansulta Remote Control.
 3. If the address was learned the modules tries to switch them in follow order: 50% - 1s - 100% - 1s - 50% - 1s - OFF.
-4. That's all. The LED should not blink!
+> The LED on ESP should be now off and not blink!
+4. Let search Alexa for Smart Home devices. I use it with Amazon Echo Plus.
+5. That's all. You can now switch and dim (50% and 100%) the lights in your kitchen by Alexa.
 
 >If WiFi is not connected or Ansulta address not learned the LED glow or blink. You can reset the settings by pushing the reset button twice. The ESP starts again with AP for web configuration portal. Repeat all configuration steps again.
 
-## References
+## References to used code
 - https://github.com/NDBCK/Ansluta-Remote-Controller
 - https://github.com/probonopd/ESP8266HueEmulator
 - https://github.com/datacute/DoubleResetDetector
