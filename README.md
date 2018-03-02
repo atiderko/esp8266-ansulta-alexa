@@ -13,7 +13,7 @@ A cheep solution to control your IKEA OMLOPP and UTRUSTA lights by Amazon's Alex
 - Wireless-transceiver-modul CC2500 from [aliexpress.com](https://de.aliexpress.com/item/Wireless-Module-CC2500-2-4G-Low-power-Consistency-Stability-Small-Size/32702148262.html).
 - If you want it modular, you can use adapter boards. But you can connect the ESP8266 and CC2500 directly.
 
-![My module top](https://github.com/atiderko/esp8266-ansulta-alexa/blob/master/my_module_top.jpg)![My module bottom](https://github.com/atiderko/esp8266-ansulta-alexa/blob/master/my_module_bottom.jpg)
+![My module top](https://github.com/atiderko/esp8266-ansulta-alexa/blob/master/my_module_top.jpg)![My module bottom](https://github.com/atiderko/esp8266-ansulta-alexa/blob/master/my_module_bottom.jpg)![Connection scheme](https://github.com/atiderko/esp8266-ansulta-alexa/blob/master/scheme.png)
 
 ## Software
 - Arduino IDE from [Arduino website](http://www.arduino.cc/en/main/software)
