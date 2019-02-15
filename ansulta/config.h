@@ -52,6 +52,7 @@ protected:
     void p_save_config();
     bool has_flag(int address, uint32_t flag);
     void set_flag(int address, uint32_t flag);
+    WiFiManager wifiManager;
 };
 
 #endif

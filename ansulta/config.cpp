@@ -92,15 +92,15 @@ void Config::setup()
     } else {
         DEBUG_PRINTLN("failed to mount FS");
     }
-    WiFiManager wifiManager;
-    wifiManager.setCustomHeadElement("<meta charset=\"UTF-8\">");
     if (remove_cfg) {
         wifiManager.resetSettings();
     }
+    // wifiManager.setMinimumSignalQuality(35);
+    wifiManager.setCustomHeadElement("<meta charset=\"UTF-8\">");
     WiFiManagerParameter custom_ansulta_name("device_name", HUE_DEVICE_NAME, HUE_DEVICE_NAME, 80);
     wifiManager.addParameter(&custom_ansulta_name);
     wifiManager.setSaveConfigCallback(saveConfigCallback);
-    wifiManager.setConnectTimeout(20);
+    wifiManager.setConnectTimeout(60);
     if (!wifiManager.autoConnect(ANSULTA_AP, AP_PASSWORD)) {
         DEBUG_PRINTLN("failed to connect and hit timeout");
         set_flag(RESET_UTC_ADDRESS, RESET_FLAG_CLEAR);
