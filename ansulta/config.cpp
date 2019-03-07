@@ -31,6 +31,8 @@ void saveConfigCallback () {
 Config::Config()
 {
     device_name = HUE_DEVICE_NAME;
+    motion_timeout = MOTION_TIMEOUT;
+    max_photo_intensity = MAX_PHOTO_INTENSITY; 
     pShouldSaveConfig = false;
     pAnsultaAddressA = 0x00;
     pAnsultaAddressB = 0x00;
@@ -59,6 +61,7 @@ void Config::setup()
             if (SPIFFS.exists(CONFIG_FILE)) {
                 DEBUG_PRINTLN("remove config file");
                 SPIFFS.remove(CONFIG_FILE);
+                wifiManager.resetSettings();
             }
         }
         if (SPIFFS.exists(CONFIG_FILE)) {
@@ -80,6 +83,8 @@ void Config::setup()
                     device_name = json["device_name"].as<String>();
                     pAnsultaAddressA = json["ansulta_address_a"].as<byte>();
                     pAnsultaAddressB = json["ansulta_address_b"].as<byte>();
+                    motion_timeout = json["motion_timeout"].as<int>();
+                    max_photo_intensity = json["max_photo_intensity"].as<int>();
                     DEBUG_PRINT("Readed ansulta address, A:");
                     DEBUG_PRINT(pAnsultaAddressA);
                     DEBUG_PRINT(", B:");
@@ -92,15 +97,20 @@ void Config::setup()
     } else {
         DEBUG_PRINTLN("failed to mount FS");
     }
-    if (remove_cfg) {
-        wifiManager.resetSettings();
-    }
     // wifiManager.setMinimumSignalQuality(35);
     wifiManager.setCustomHeadElement("<meta charset=\"UTF-8\">");
     WiFiManagerParameter custom_ansulta_name("device_name", HUE_DEVICE_NAME, HUE_DEVICE_NAME, 80);
     wifiManager.addParameter(&custom_ansulta_name);
+    char TIMEOUT_STR[7];
+    sprintf(TIMEOUT_STR, "%d", motion_timeout);
+    WiFiManagerParameter custom_ansulta_motion_timeout("motion_timeout", TIMEOUT_STR, TIMEOUT_STR, 7);
+    wifiManager.addParameter(&custom_ansulta_motion_timeout);
+    char MAX_PHOTO_INTENSITY_STR[5];
+    sprintf(MAX_PHOTO_INTENSITY_STR, "%d", max_photo_intensity);
+    WiFiManagerParameter custom_ansulta_max_photo_intensity("max_photo_intensity", MAX_PHOTO_INTENSITY_STR, MAX_PHOTO_INTENSITY_STR, 5);
+    wifiManager.addParameter(&custom_ansulta_max_photo_intensity);
     wifiManager.setSaveConfigCallback(saveConfigCallback);
-    wifiManager.setConnectTimeout(60);
+    wifiManager.setConnectTimeout(30);
     if (!wifiManager.autoConnect(ANSULTA_AP, AP_PASSWORD)) {
         DEBUG_PRINTLN("failed to connect and hit timeout");
         set_flag(RESET_UTC_ADDRESS, RESET_FLAG_CLEAR);
@@ -112,6 +122,7 @@ void Config::setup()
     //if you get here you have connected to the WiFi
     DEBUG_PRINTLN("connected...yeey :)");
     device_name = custom_ansulta_name.getValue();
+    motion_timeout = atoi(custom_ansulta_motion_timeout.getValue());
 
     if (pShouldSaveConfig) {
       p_save_config();
@@ -162,6 +173,8 @@ void Config::p_save_config()
     json["device_name"] = device_name;
     json["ansulta_address_a"] = pAnsultaAddressA;
     json["ansulta_address_b"] = pAnsultaAddressB;
+    json["motion_timeout"] = motion_timeout;
+    json["max_photo_intensity"] = max_photo_intensity;
     File configFile = SPIFFS.open(CONFIG_FILE, "w");
     if (!configFile) {
         DEBUG_PRINTLN("failed to open config file for writing");

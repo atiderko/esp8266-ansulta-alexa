@@ -35,16 +35,22 @@ https://github.com/NDBCK/Ansluta-Remote-Controller
 #define Light_ON_100    0x03      // Command to turn the light on 100%
 #define Light_PAIR      0xFF      // Command to pair a remote to the light
 
+class AnsultaCallback {
+  public:
+    virtual void light_state_changed(int state, bool by_ansulta_ctrl);
+};
+
 class Ansulta {
 public:
-    static const int OFF = 0;
-    static const int ON_50 = 1;
-    static const int ON_100 = 2;
+    static const byte OFF = 0x01;
+    static const byte ON_50 = 0x02;
+    static const byte ON_100 = 0x03;
 
     Ansulta();
     ~Ansulta();
     void init();
     void serverLoop();
+    void add_handler(AnsultaCallback *handler);
     bool valid_address();
     void light_ON_50(int count=50);
     void light_ON_100(int count=50);
@@ -55,6 +61,7 @@ public:
     byte get_address_b();
 
 private:
+    std::vector<AnsultaCallback *> p_ansulta_handler;
     bool p_address_found;
     bool p_first_info;
     int p_count_c;
@@ -66,10 +73,13 @@ private:
     
     byte AddressByteA;
     byte AddressByteB;
+    byte p_led_state;
 
     int p_count_repeats;
-    int p_led_state;
+    unsigned long p_off_last_cmd_ms;
 
+    void inform_handler(int state, bool by_ansulta_ctrl);
+    void read_cmd();
     void ReadAddressBytes();
     byte ReadReg(byte addr);
     void SendStrobe(byte strobe, unsigned int delay_after=200);

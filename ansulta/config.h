@@ -33,7 +33,12 @@ static char HUE_DEVICE_NAME[] = "Küchenlicht";
 
 class Config {
 public:
+    static const unsigned long MOTION_TIMEOUT = 35000; // millis
+    static const int MAX_PHOTO_INTENSITY = 100;
+
     String device_name;
+    unsigned long motion_timeout;
+    int max_photo_intensity;
     Config();
     ~Config();
     void setup();
