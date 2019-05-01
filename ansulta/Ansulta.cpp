@@ -27,6 +27,7 @@ Ansulta::Ansulta()
   delayC = 255;  //255++ 128++ 64--  // delay after send command
   delayD = 0;  //200++ 128+++ 64+++ 32+++ 8++
   delayE = 200;
+  p_brightness = 0;
 
   AddressByteA = 0x00;
   AddressByteB = 0x00;
@@ -133,34 +134,42 @@ byte Ansulta::get_address_b()
   return AddressByteB;
 }
 
-void Ansulta::light_ON_50(int count)
+int Ansulta::get_brightness()
+{
+  return p_brightness;
+}
+
+void Ansulta::light_ON_50(int count, bool disable_motion_detection, int brightness)
 {
   /*** Send the command to turn the light on 50% ***/
   p_count_repeats = REPEATS;
   p_led_state = ON_50;
+  p_brightness = brightness;
   SendCommand(AddressByteA, AddressByteB, Light_ON_50, count);
   // delay(1000);
-  inform_handler(p_led_state, false);
+  inform_handler(p_led_state, disable_motion_detection);
 }
 
-void Ansulta::light_ON_100(int count)
+void Ansulta::light_ON_100(int count, bool disable_motion_detection, int brightness)
 {
   /*** Send the command to turn the light on 50% ***/
   p_count_repeats = REPEATS;
   p_led_state = ON_100;
+  p_brightness = brightness;
   SendCommand(AddressByteA, AddressByteB, Light_ON_100, count);
   // delay(1000);
-  inform_handler(p_led_state, false);
+  inform_handler(p_led_state, disable_motion_detection);
 }
 
-void Ansulta::light_OFF(int count)
+void Ansulta::light_OFF(int count, bool disable_motion_detection, int brightness)
 {
   /*** Send the command to turn the light off ***/
   p_count_repeats = REPEATS;
   p_led_state = OFF;
+  p_brightness = brightness;
   SendCommand(AddressByteA, AddressByteB, Light_OFF, count);
   // delay(1000);
-  inform_handler(p_led_state, false);
+  inform_handler(p_led_state, disable_motion_detection);
 }
 
 

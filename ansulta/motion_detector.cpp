@@ -63,9 +63,9 @@ int MotionDetector::loop() {
     // motion detected
     if (md1_state == HIGH) {
         p_count_detected++;
-        DEBUG_PRINT("detected count: ");
-        DEBUG_PRINT(p_count_detected);
-        DEBUG_PRINTLN();
+        // DEBUG_PRINT("detected count: ");
+        // DEBUG_PRINT(p_count_detected);
+        // DEBUG_PRINTLN();
         p_md1_ts_detection = current_time;
         if (!is_on && p_count_detected > 1) {
           int photo_state = analogRead(p_photo_pin);

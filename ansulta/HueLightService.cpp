@@ -1061,16 +1061,18 @@ void LightServiceClass::addSingleLightJson(JsonObject& root, int numberOfTheLigh
     JsonObject& state = root.createNestedObject("state");
     LightInfo info = lightHandler->getInfo(numberOfTheLight);
     state["on"] = info.on;
-    state["hue"] = info.hue;  // hs mode: the hue (expressed in ~deg*182.04)
     state["bri"] = info.brightness;  // brightness between 0-254 (NB 0 is not off!)
-    state["sat"] = info.saturation; // hs mode: saturation between 0-254
-    JsonArray& xystate = state.createNestedArray("xy");
-    xystate.add(0.0);
-    xystate.add(0.0);
-    state["ct"] = 500;  // ct mode: color temp (expressed in mireds range 154-500)
+    if (info.bulbType == BulbType::EXTENDED_COLOR_LIGHT) {
+        state["hue"] = info.hue;  // hs mode: the hue (expressed in ~deg*182.04)
+        state["sat"] = info.saturation; // hs mode: saturation between 0-254
+        JsonArray& xystate = state.createNestedArray("xy");
+        xystate.add(0.0);
+        xystate.add(0.0);
+        state["ct"] = 500;  // ct mode: color temp (expressed in mireds range 154-500)
+        state["effect"] = info.effect == EFFECT_COLORLOOP ? "colorloop" : "none";
+        state["colormode"] = "hs";  // the current color mode
+    }
     state["alert"] = "none";  // 'select' flash the lamp once, 'lselect' repeat flash for 30s
-    state["effect"] = info.effect == EFFECT_COLORLOOP ? "colorloop" : "none";
-    state["colormode"] = "hs";  // the current color mode
     state["reachable"] = true;  // lamp can be seen by the hub
     state["swversion"] = "0.1";  
     if (info.bulbType == BulbType::DIMMABLE_LIGHT) {

@@ -36,6 +36,7 @@ Config::Config()
     pShouldSaveConfig = false;
     pAnsultaAddressA = 0x00;
     pAnsultaAddressB = 0x00;
+    p_has_motion = motion_timeout > 0;
 }
 
 Config::~Config()
@@ -85,6 +86,7 @@ void Config::setup()
                     pAnsultaAddressB = json["ansulta_address_b"].as<byte>();
                     motion_timeout = json["motion_timeout"].as<int>();
                     max_photo_intensity = json["max_photo_intensity"].as<int>();
+                    p_has_motion = motion_timeout > 0;
                     DEBUG_PRINT("Readed ansulta address, A:");
                     DEBUG_PRINT(pAnsultaAddressA);
                     DEBUG_PRINT(", B:");
@@ -123,6 +125,7 @@ void Config::setup()
     DEBUG_PRINTLN("connected...yeey :)");
     device_name = custom_ansulta_name.getValue();
     motion_timeout = atoi(custom_ansulta_motion_timeout.getValue());
+    p_has_motion = motion_timeout > 0;
 
     if (pShouldSaveConfig) {
       p_save_config();
@@ -140,6 +143,11 @@ void Config::loop()
 bool Config::is_connected()
 {
   return (WiFi.status() == WL_CONNECTED);
+}
+
+bool Config::has_motion()
+{
+    return p_has_motion;  
 }
 
 void Config::should_save_config()

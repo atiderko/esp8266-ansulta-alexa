@@ -52,11 +52,12 @@ public:
     void serverLoop();
     void add_handler(AnsultaCallback *handler);
     bool valid_address();
-    void light_ON_50(int count=50);
-    void light_ON_100(int count=50);
-    void light_OFF(int count=50);
+    void light_ON_50(int count=50, bool disable_motion_detection=false, int brightness=127);
+    void light_ON_100(int count=50, bool disable_motion_detection=false, int brightness=254);
+    void light_OFF(int count=50, bool disable_motion_detection=false, int brightness=0);
     int get_state();
     bool set_address(byte addr_a, byte addr_b);
+    int get_brightness();
     byte get_address_a();
     byte get_address_b();
 
@@ -70,6 +71,7 @@ private:
     byte delayC;
     byte delayD;
     byte delayE;
+    int p_brightness;
     
     byte AddressByteA;
     byte AddressByteB;

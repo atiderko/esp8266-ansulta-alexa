@@ -36,33 +36,33 @@ class AnsultaHandler : public hue::LightHandler {
     void handleQuery(int lightNumber, hue::LightInfo newInfo, JsonObject& raw) {
         if (newInfo.on) {
             DEBUG_PRINT("turn on " + this->getFriendlyName(lightNumber));
-            if (!_info.on || _info.brightness > newInfo.brightness) {
+            if (!_info.on || newInfo.brightness <= 127) {
                 led.blink(2, 300);
                 DEBUG_PRINTLN(" to 50%");
-                ansulta.light_ON_50(50);
-                newInfo.brightness = 127;
+                ansulta.light_ON_50(50, true, newInfo.brightness);
+                newInfo.brightness = newInfo.brightness;
             } else {
                 led.blink(3, 300);
                 DEBUG_PRINTLN(" to 100%");
-                ansulta.light_ON_100(50);
-                newInfo.brightness = 254;
+                ansulta.light_ON_100(50, true, newInfo.brightness);
+                newInfo.brightness = newInfo.brightness;
             }
         } else {
             // switch off
             DEBUG_PRINTLN("turn off " + this->getFriendlyName(lightNumber));
             led.blink(1, 300);
-            ansulta.light_OFF(50);
+            ansulta.light_OFF(50, true);
         }
         _info = newInfo;
     }
     hue::LightInfo getInfo(int lightNumber) {
         _info.on = ansulta.get_state() != ansulta.OFF;
         if (ansulta.get_state() == ansulta.OFF) {
-            _info.brightness = 0;
+            _info.brightness = ansulta.get_brightness();
         } else if (ansulta.get_state() == ansulta.ON_50) {
-            _info.brightness = 127;
+            _info.brightness = ansulta.get_brightness();
         } else if (ansulta.get_state() == ansulta.ON_100) {
-            _info.brightness = 254;
+            _info.brightness = ansulta.get_brightness();
         }
         return _info;
     }
@@ -128,17 +128,19 @@ void loop()
     led.update();
     ansulta.serverLoop();
     delay(10);
-    int mresult = motion.loop();
-    if (motion_state != mresult) {
-        DEBUG_PRINT("Motion state: ");
-        DEBUG_PRINT(mresult);
-        DEBUG_PRINTLN();
-        if (mresult == 1) {
-            led.blink(2, 250);
-        } else if (mresult > 1) {
-            led.blink(mresult, 1000 * mresult);
+    if (cfg.has_motion()) {
+        int mresult = motion.loop();
+        if (motion_state != mresult) {
+            DEBUG_PRINT("Motion state: ");
+            DEBUG_PRINT(mresult);
+            DEBUG_PRINTLN();
+            if (mresult == 1) {
+                led.blink(2, 250);
+            } else if (mresult > 1) {
+                led.blink(mresult, 1000 * mresult);
+            }
+            motion_state = mresult;
         }
-        motion_state = mresult;
     }
 }
 

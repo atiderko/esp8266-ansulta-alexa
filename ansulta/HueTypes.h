@@ -81,13 +81,13 @@ enum class BulbType {
 struct LightInfo {
   bool on = false;
   int brightness = 0;
-  ColorType type = TYPE_HUE_SAT;
-  BulbType bulbType = BulbType::EXTENDED_COLOR_LIGHT;
+  ColorType type = TYPE_CT;
+  BulbType bulbType = BulbType::DIMMABLE_LIGHT;
   int hue = 0;
   int saturation = 0;
   Alert alert = ALERT_NONE;
   Effect effect = EFFECT_NONE;
-  unsigned int transitionTime = 800; // by default there is a transition time to the new state of 400 milliseconds
+  unsigned int transitionTime = 400; // by default there is a transition time to the new state of 400 milliseconds
 };
 
 
