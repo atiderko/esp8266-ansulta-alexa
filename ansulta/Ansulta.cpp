@@ -27,7 +27,7 @@ Ansulta::Ansulta()
   delayC = 255;  //255++ 128++ 64--  // delay after send command
   delayD = 0;  //200++ 128+++ 64+++ 32+++ 8++
   delayE = 200;
-  p_brightness = 0;
+  p_brightness = 1;
 
   AddressByteA = 0x00;
   AddressByteB = 0x00;

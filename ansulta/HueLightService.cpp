@@ -493,6 +493,7 @@ void LightServiceClass::addLightJson(JsonObject& root, int numberOfTheLight, Lig
 
     JsonObject& state = light.createNestedObject("state");
     state["on"] = info.on;
+    DEBUG_PRINTLN("addLightJson");
     state["bri"] = info.brightness;  // brightness between 0-254 (NB 0 is not off!)
 
     if (info.bulbType == BulbType::EXTENDED_COLOR_LIGHT) {
@@ -1074,13 +1075,13 @@ void LightServiceClass::addSingleLightJson(JsonObject& root, int numberOfTheLigh
     }
     state["alert"] = "none";  // 'select' flash the lamp once, 'lselect' repeat flash for 30s
     state["reachable"] = true;  // lamp can be seen by the hub
-    state["swversion"] = "0.1";  
+    root["swversion"] = "0.1";  
     if (info.bulbType == BulbType::DIMMABLE_LIGHT) {
-        state["type"] = "Dimmable light";
+        root["type"] = "Dimmable light";
     } else {
-        state["type"] = "Extended color light";
+        root["type"] = "Extended color light";
     }
-    state["uniqueid"] = lightNumber;
+    root["uniqueid"] = lightNumber;
 }
 
 void LightServiceClass::lightsIdFn(WcFnRequestHandler *whandler, String requestUri, HTTPMethod method)
@@ -1120,9 +1121,11 @@ void LightServiceClass::lightsIdStateFn(WcFnRequestHandler *whandler, String req
         case HTTP_PUT: {
             DynamicJsonBuffer jsonBuffer;
             JsonObject& parsedRoot = jsonBuffer.parseObject(HTTP->arg("plain"));
+            DEBUG_PRINTLN("lightsIdStateFn requestUri:" + requestUri);
+            DEBUG_PRINTLN("lightsIdStateFn request:" + HTTP->arg("plain"));
             if (!parsedRoot.success()) {
                 // unparseable json
-                sendError(2, requestUri, "Bad JSON body in request");
+                sendError(2, requestUri, "Bad JSON body in request" + HTTP->arg("plain"));
                 return;       
             }
             LightInfo currentInfo = handler->getInfo(numberOfTheLight);

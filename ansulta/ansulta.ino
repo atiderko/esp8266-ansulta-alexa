@@ -34,26 +34,34 @@ class AnsultaHandler : public hue::LightHandler {
         return cfg.device_name;  // defined in config.h
     }
     void handleQuery(int lightNumber, hue::LightInfo newInfo, JsonObject& raw) {
+        int brightness = newInfo.brightness;
+        DEBUG_PRINT("ON: ");
+        DEBUG_PRINTLN(newInfo.on);
+        DEBUG_PRINT("brightness: ");
+        DEBUG_PRINTLN(brightness);
         if (newInfo.on) {
+            if (brightness == 0) {
+                brightness = 254;
+            }
             DEBUG_PRINT("turn on " + this->getFriendlyName(lightNumber));
-            if (!_info.on || newInfo.brightness <= 127) {
+            if (ansulta.get_brightness() > 0 && brightness <= 127) {
                 led.blink(2, 300);
                 DEBUG_PRINTLN(" to 50%");
-                ansulta.light_ON_50(50, true, newInfo.brightness);
-                newInfo.brightness = newInfo.brightness;
+                ansulta.light_ON_50(50, true, brightness);
             } else {
                 led.blink(3, 300);
                 DEBUG_PRINTLN(" to 100%");
-                ansulta.light_ON_100(50, true, newInfo.brightness);
-                newInfo.brightness = newInfo.brightness;
+                ansulta.light_ON_100(50, true, brightness);
             }
         } else {
             // switch off
+            brightness = 1;
             DEBUG_PRINTLN("turn off " + this->getFriendlyName(lightNumber));
             led.blink(1, 300);
-            ansulta.light_OFF(50, true);
+            ansulta.light_OFF(50, true, brightness);
         }
-        _info = newInfo;
+        _info.on = newInfo.on;
+        _info.brightness = brightness;
     }
     hue::LightInfo getInfo(int lightNumber) {
         _info.on = ansulta.get_state() != ansulta.OFF;
