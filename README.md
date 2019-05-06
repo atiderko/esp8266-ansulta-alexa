@@ -17,10 +17,10 @@ A cheep solution to control your IKEA OMLOPP and UTRUSTA lights by Amazon's Alex
 
 ## Software
 - Arduino IDE from [Arduino website](http://www.arduino.cc/en/main/software)
-- [Arduino core for ESP8266 WiFi chip](https://github.com/esp8266/Arduino) - I installed v2.4.0 from Git 
-- [WiFiManager](https://github.com/tzapu/WiFiManager/) - I use v0.12 from Git
+- [Arduino core for ESP8266 WiFi chip](https://github.com/esp8266/Arduino) - I installed v2.5.0 from Git 
+- [WiFiManager](https://github.com/tzapu/WiFiManager/) - I use v0.14 from Git
 - this repository
-- Build and flash the ESP8266. Select - Board:"WeMoS D1 R2 & mini", Upload Speed: "115200"
+- Build and flash the ESP8266. Select - Board:"LONIN(WeMoS) D1 R2 & mini", Upload Speed: "115200", Flash Size: 4M(1M SPIFFS)
 
 ## Configuration
 1. On first start an AP for web configuration portal is launched with SSID "AnsultaAP". Take your smartphone to connect to this AP. Once connected you can select your WiFi enter password and name for device shown in Alexa.

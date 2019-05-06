@@ -31,6 +31,7 @@ class MotionDetector : public AnsultaCallback {
     int p_count_disable;
     int p_count_detected;
     unsigned long p_disable_duration;
+    int p_photo_state_smooth;
     
     unsigned long p_md1_ts_detection;
     unsigned long p_motion_ts_deactivated;

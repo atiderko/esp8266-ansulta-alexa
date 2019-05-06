@@ -181,14 +181,14 @@ bool SSDPClass::begin(){
     return false;
   }
 
-  if (!_server->listen(*IP_ADDR_ANY, SSDP_PORT)) {
+  if (!_server->listen(IP_ADDR_ANY, SSDP_PORT)) {
     return false;
   }
 
   _server->setMulticastInterface(ifaddr);
   _server->setMulticastTTL(_ttl);
   _server->onRx(std::bind(&SSDPClass::_update, this));
-  if (!_server->connect(multicast_addr, SSDP_PORT)) {
+  if (!_server->connect(&multicast_addr, SSDP_PORT)) {
     return false;
   }
 

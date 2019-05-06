@@ -80,7 +80,7 @@ enum class BulbType {
 
 struct LightInfo {
   bool on = false;
-  int brightness = 0;
+  int brightness = 1;
   ColorType type = TYPE_CT;
   BulbType bulbType = BulbType::DIMMABLE_LIGHT;
   int hue = 0;

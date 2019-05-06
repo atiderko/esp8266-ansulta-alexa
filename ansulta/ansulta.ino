@@ -40,7 +40,7 @@ class AnsultaHandler : public hue::LightHandler {
         DEBUG_PRINT("brightness: ");
         DEBUG_PRINTLN(brightness);
         if (newInfo.on) {
-            if (brightness == 0) {
+            if (brightness == 0 || brightness == 1) {
                 brightness = 254;
             }
             DEBUG_PRINT("turn on " + this->getFriendlyName(lightNumber));
