@@ -1,6 +1,6 @@
 #include <SPI.h>
 
-#define DEBUG //"Schalter" zum aktivieren
+// #define DEBUG //"Schalter" zum aktivieren
 
 // do not change
 #ifdef DEBUG
@@ -14,4 +14,3 @@
 #define DEBUG_FPRINT(x, y)
 #define DEBUG_FPRINTLN(x, y)
 #endif
-

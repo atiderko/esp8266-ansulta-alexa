@@ -46,7 +46,7 @@ void OnBoardLED::update()
         new_state = p_get_state(200, 200);
         break;
       case WIFI_CONNECTING:
-        new_state = p_get_state(2000, 1000);
+        new_state = p_get_state(200, 2000);
         break;
       case ANSULTA_SEARCHING:
         new_state = p_get_state(2000, 4000);

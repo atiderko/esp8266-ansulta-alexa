@@ -33,12 +33,18 @@ static char HUE_DEVICE_NAME[] = "Küchenlicht";
 
 class Config {
 public:
+    static const unsigned long MOTION_TIMEOUT = 0; // millis, 0 disables motion
+    static const int MAX_PHOTO_INTENSITY = 100;
+
     String device_name;
+    unsigned long motion_timeout;
+    int max_photo_intensity;
     Config();
     ~Config();
     void setup();
     void loop();
     bool is_connected();
+    bool has_motion();
     void should_save_config();
     void save_ansulta_address(byte address_a, byte address_b);
     byte get_ansulta_address_a();
@@ -49,6 +55,7 @@ protected:
     bool pShouldSaveConfig;
     byte pAnsultaAddressA;
     byte pAnsultaAddressB;
+    bool p_has_motion;
     void p_save_config();
     bool has_flag(int address, uint32_t flag);
     void set_flag(int address, uint32_t flag);

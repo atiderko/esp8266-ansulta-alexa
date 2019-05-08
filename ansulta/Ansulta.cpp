@@ -27,9 +27,12 @@ Ansulta::Ansulta()
   delayC = 255;  //255++ 128++ 64--  // delay after send command
   delayD = 0;  //200++ 128+++ 64+++ 32+++ 8++
   delayE = 200;
+  p_brightness = 1;
 
   AddressByteA = 0x00;
   AddressByteB = 0x00;
+  p_led_state = OFF;
+  p_count_repeats = 0;
 }
 
 Ansulta::~Ansulta()
@@ -89,9 +92,24 @@ void Ansulta::serverLoop()
         break;
     }
   }
+
+  // read for command
+  read_cmd();
   /*** Send the command to pair the transformer with this remote ***/
   // SendCommand(AddressByteA,AddressByteB, Light_PAIR);
   // delay(1000);
+}
+
+void Ansulta::add_handler(AnsultaCallback *handler) {
+  if (handler != NULL) {
+    p_ansulta_handler.push_back(handler);
+  }
+}
+
+void Ansulta::inform_handler(int state, bool by_ansulta_ctrl) {
+  for (unsigned int idx = 0; idx < p_ansulta_handler.size(); idx++) {
+    p_ansulta_handler[idx]->light_state_changed(state, by_ansulta_ctrl);
+  }
 }
 
 bool Ansulta::valid_address() {
@@ -116,37 +134,94 @@ byte Ansulta::get_address_b()
   return AddressByteB;
 }
 
-void Ansulta::light_ON_50(int count)
+int Ansulta::get_brightness()
+{
+  return p_brightness;
+}
+
+void Ansulta::light_ON_50(int count, bool disable_motion_detection, int brightness)
 {
   /*** Send the command to turn the light on 50% ***/
   p_count_repeats = REPEATS;
   p_led_state = ON_50;
+  p_brightness = brightness;
   SendCommand(AddressByteA, AddressByteB, Light_ON_50, count);
   // delay(1000);
+  inform_handler(p_led_state, disable_motion_detection);
 }
 
-void Ansulta::light_ON_100(int count)
+void Ansulta::light_ON_100(int count, bool disable_motion_detection, int brightness)
 {
   /*** Send the command to turn the light on 50% ***/
   p_count_repeats = REPEATS;
   p_led_state = ON_100;
+  p_brightness = brightness;
   SendCommand(AddressByteA, AddressByteB, Light_ON_100, count);
   // delay(1000);
+  inform_handler(p_led_state, disable_motion_detection);
 }
 
-void Ansulta::light_OFF(int count)
+void Ansulta::light_OFF(int count, bool disable_motion_detection, int brightness)
 {
   /*** Send the command to turn the light off ***/
   p_count_repeats = REPEATS;
   p_led_state = OFF;
+  p_brightness = brightness;
   SendCommand(AddressByteA, AddressByteB, Light_OFF, count);
   // delay(1000);
+  inform_handler(p_led_state, disable_motion_detection);
 }
 
 
 int Ansulta::get_state()
 {
   return p_led_state;
+}
+
+void Ansulta::read_cmd()
+{
+    SendStrobe(CC2500_SRX);
+    WriteReg(REG_IOCFG1,0x01);   // Switch MISO to output if a packet has been received or not
+    delay(10);
+    byte PacketLength = ReadReg(CC2500_FIFO);
+    if (PacketLength > 1) {      
+      byte recvPacket[PacketLength];
+      if (PacketLength <= 8) {                       //A packet from the remote cant be longer than 8 bytes
+        DEBUG_PRINTLN();
+        DEBUG_PRINT("Ansulta: Packet received: ");
+        DEBUG_FPRINT(PacketLength, DEC);
+        DEBUG_PRINTLN(" bytes");
+        for (byte i = 0; i < PacketLength; i++){    //Read the received data from CC2500
+          recvPacket[i] = ReadReg(CC2500_FIFO);
+          if (recvPacket[i] < 0x10) { DEBUG_PRINT("0"); }
+          DEBUG_FPRINT(recvPacket[i], HEX);
+        }
+      }
+        
+      byte start=0;
+      while((recvPacket[start] != 0x55) && (start < PacketLength)){   //Search for the start of the sequence
+        start++;
+      }
+      if (recvPacket[start+1] == 0x01 && recvPacket[start+5] == 0xAA){   //If the bytes match an Ikea remote sequence
+        if ( (AddressByteA == recvPacket[start+2]) && (AddressByteB == recvPacket[start+3])) {
+          p_led_state = recvPacket[start+4];
+          if (p_led_state == OFF) {
+            p_brightness = 1;
+          } else if (p_led_state == ON_50) {
+            p_brightness = 127;
+          } else if (p_led_state == ON_100) {
+            p_brightness = 254;
+          }
+          DEBUG_PRINTLN();
+          DEBUG_PRINT("Ansulta: new light intensity: ");
+          DEBUG_FPRINT(p_led_state, HEX);
+          DEBUG_PRINTLN();
+          inform_handler(p_led_state, true);
+        }
+      } 
+      SendStrobe(CC2500_SIDLE);      // Needed to flush RX FIFO
+      SendStrobe(CC2500_SFRX);       // Flush RX FIFO
+    } 
 }
 
 void Ansulta::ReadAddressBytes()
@@ -193,6 +268,7 @@ void Ansulta::ReadAddressBytes()
           p_address_found = true;
           AddressByteA = recvPacket[start+2];                // Extract the addressbytes
           AddressByteB = recvPacket[start+3];
+          p_led_state = recvPacket[start+4];
           DEBUG_PRINTLN();
           DEBUG_PRINT("Ansulta: Address Bytes found: ");
           if (AddressByteA < 0x10) { DEBUG_PRINT("0"); }
