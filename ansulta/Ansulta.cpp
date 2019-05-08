@@ -205,6 +205,13 @@ void Ansulta::read_cmd()
       if (recvPacket[start+1] == 0x01 && recvPacket[start+5] == 0xAA){   //If the bytes match an Ikea remote sequence
         if ( (AddressByteA == recvPacket[start+2]) && (AddressByteB == recvPacket[start+3])) {
           p_led_state = recvPacket[start+4];
+          if (p_led_state == OFF) {
+            p_brightness = 1;
+          } else if (p_led_state == ON_50) {
+            p_brightness = 127;
+          } else if (p_led_state == ON_100) {
+            p_brightness = 254;
+          }
           DEBUG_PRINTLN();
           DEBUG_PRINT("Ansulta: new light intensity: ");
           DEBUG_FPRINT(p_led_state, HEX);
