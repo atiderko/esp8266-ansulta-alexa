@@ -24,7 +24,7 @@ A cheep solution to control your IKEA OMLOPP and UTRUSTA lights by Amazon's Alex
 
 ## Configuration
 1. On first start an AP for web configuration portal is launched with SSID "AnsultaAP". Take your smartphone to connect to this AP. Once connected you can select your WiFi enter password and name for device shown in Alexa.
-2. First option: name of the lamp, second option: timeout for motion detection (0: disable), third option: light intensity if motion and light sensor connected. 
+2. First option: name of the lamp, second option: timeout for motion detection (0: disable), third option: light intensity if motion (PIN: D0) and light (PIN: A0) sensor connected. 
 3. After the module is successful connected to WiFi you have to push the button (several times if needed) on your Ansulta Remote Control.
 4. If the address was learned the modules tries to switch them in follow order: 50% - 1s - 100% - 1s - 50% - 1s - OFF.
 > The LED on ESP should be now off and not blink!
