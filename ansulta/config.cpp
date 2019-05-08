@@ -112,8 +112,14 @@ void Config::setup()
     WiFiManagerParameter custom_ansulta_max_photo_intensity("max_photo_intensity", MAX_PHOTO_INTENSITY_STR, MAX_PHOTO_INTENSITY_STR, 5);
     wifiManager.addParameter(&custom_ansulta_max_photo_intensity);
     wifiManager.setSaveConfigCallback(saveConfigCallback);
-    wifiManager.setConnectTimeout(30);
-    if (!wifiManager.autoConnect(ANSULTA_AP, AP_PASSWORD)) {
+    wifiManager.setConnectTimeout(60);
+    bool wifi_connected = false;
+    if (remove_cfg) {
+        wifi_connected = wifiManager.startConfigPortal(ANSULTA_AP, AP_PASSWORD);
+    } else {
+        wifi_connected = wifiManager.autoConnect(ANSULTA_AP, AP_PASSWORD);
+    }
+    if (!wifi_connected) {
         DEBUG_PRINTLN("failed to connect and hit timeout");
         set_flag(RESET_UTC_ADDRESS, RESET_FLAG_CLEAR);
         delay(3000);
@@ -204,4 +210,3 @@ void Config::set_flag(int address, uint32_t flag)
 {
     ESP.rtcUserMemoryWrite(address, &flag, sizeof(flag));
 }
-
