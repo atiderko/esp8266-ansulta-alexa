@@ -64,6 +64,7 @@ protected:
     WebServer *pServer;
     IotWebConf *pIotWebConf;
     String pSSIDselectorString;
+    IotWebConfParameter pDeviceName;
     IotWebConfSeparator pAnsultaSeparator;
     IotWebConfParameter pIotParamAnsultaAddressA;
     IotWebConfParameter pIotParamAnsultaAddressB;

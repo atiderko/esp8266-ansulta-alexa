@@ -18,7 +18,7 @@ A cheep solution to control your IKEA OMLOPP and UTRUSTA lights by Amazon's Alex
 ## Software
 - Arduino IDE from [Arduino website](http://www.arduino.cc/en/main/software)
 - [Arduino core for ESP8266 WiFi chip](https://github.com/esp8266/Arduino) - I installed v2.5.0 from Git 
-- [WiFiManager](https://github.com/tzapu/WiFiManager/) - I use v0.14 from Git
+- [IotWebConf](https://github.com/prampec/IotWebConf) - I use v2.3.0 from Git
 - this repository
 - Build and flash the ESP8266. Select - Board:"LONIN(WeMoS) D1 R2 & mini", Upload Speed: "115200", Flash Size: 4M(1M SPIFFS)
 

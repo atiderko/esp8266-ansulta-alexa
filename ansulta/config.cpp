@@ -75,6 +75,7 @@ void Config::setup()
         pIotWebConf->getWifiSsidParameter()->label = NULL;
         pIotWebConf->getWifiSsidParameter()->customHtml = pSSIDselectorString.c_str();
     }
+    pDeviceName = IotWebConfParameter("Device name", "deviceName", device_name, 128, "text", HUE_DEVICE_NAME, HUE_DEVICE_NAME, NULL, true);
     // add settings for motion detection
     pMotionSeparator = IotWebConfSeparator("Motion Detection");
     pMotionEnabled = IotWebConfParameter(NULL, "mdEnabled", p_has_motion, NUMBER_LEN, "number", "0,1", 0, "<div class=\"\"><label for=\"mdEnabled\">Enabled</label><div class=\"\" style=\"padding:0px;font-size:1em;width:100%;\"><select type=\"text\" id=\"mdEnabled\" name=\"mdEnabled\" maxlength=1 value=\"\"/><option value=\"" + p_has_motion + "\">" + p_has_motion + "</option><option value=\"" + !p_has_motion + "\">" + !p_has_motion + "</option></select></div></div>", true);
@@ -84,6 +85,7 @@ void Config::setup()
     pAnsultaSeparator = IotWebConfSeparator("Ansulta address (autodetect)");
     pIotParamAnsultaAddressA = IotWebConfParameter("AddressA", "ansulta_address_a", pAnsultaAddressA, NUMBER_LEN, "number", "0..256", NULL, "0: autodetect", true);
     pIotParamAnsultaAddressB = IotWebConfParameter("AddressB", "ansulta_address_b", pAnsultaAddressB, NUMBER_LEN, "number", "0..256", NULL, "0: autodetect", true);
+    pIotWebConf->addParameter(&pDeviceName);
     pIotWebConf->addParameter(&pMotionSeparator);
     pIotWebConf->addParameter(&pMotionEnabled);
     pIotWebConf->addParameter(&pMotionTimeout);
