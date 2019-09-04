@@ -30,6 +30,7 @@ bool initialized = false;
 #define TZ_SEC          ((TZ)*3600)
 #define DST_SEC         ((DST_MN)*60)
 
+
 // callback to set the NTP date in LightService
 void time_is_set(void)
 {
@@ -49,7 +50,6 @@ void loop()
 {
     //led.set_connection_state(led.NOT_CONNECTED);
     cfg.loop();
-    return;
     if (cfg.is_connected()) {
         if (!initialized) {
             saved_ansulta_address = ansulta.set_address(cfg.get_ansulta_address_a(), cfg.get_ansulta_address_b());
@@ -61,7 +61,7 @@ void loop()
             DEBUG_PRINTLN("Adding ansulta light switch");
             AnsultaLightHandler* ansulta_handler = new AnsultaLightHandler(&ansulta, &cfg, &led);
             lightService.setLightHandler(0, *ansulta_handler);
-            motion.init(ansulta, cfg.motion_timeout, cfg.max_photo_intensity);
+            motion.init(ansulta, cfg.motion_timeout_sec * 1000, cfg.max_photo_intensity);
             ansulta.add_handler(&motion);
             initialized = true;
         }

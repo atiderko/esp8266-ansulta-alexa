@@ -7,12 +7,10 @@ Copyright (c) 2018 Alexander Tiderko
 Licensed under MIT license
 
 Configuration class to setup WiFi settings using
-WiFiManager [https://github.com/tzapu/WiFiManager].
+IoTWebConf [https://github.com/prampec/IotWebConf].
 It is also possible to reset the configuration by double press
 on reset. The idea is based on
 https://github.com/datacute/DoubleResetDetector
-
-IoTWebConf: https://github.com/prampec/IotWebConf
 
 **************************************************************/
 #ifndef CONFIG_H
@@ -21,23 +19,13 @@ IoTWebConf: https://github.com/prampec/IotWebConf
 #include <IotWebConf.h>
 #define IOTWEBCONF_DEBUG_TO_SERIAL true
 
-#include <FS.h>
-#include <DNSServer.h>
-//#include <WiFiManager.h>
-
 // -- Configuration specific key. The value should be modified if config structure was changed.
 #define CONFIG_VERSION "ansulta v2"
-#define CONFIG_FILE "/ansulta_config.json"
-#define STRING_LEN 128
 #define NUMBER_LEN 32
 #define STATUS_PIN LED_BUILTIN
-//#define ANSULTA_AP "AnsultaAP"
-//#define AP_PASSWORD "ansulta"
-// -- Initial name of the Thing. Used e.g. as SSID of the own Access Point.
-const char ANSULTA_AP[] = "AnsultaAP";
-// -- Initial password to connect to the Thing, when it creates an own Access Point.
-const char AP_PASSWORD[] = "defaultpw";
 
+const char ANSULTA_AP[] = "AnsultaAP";
+const char AP_PASSWORD[] = "defaultpw";
 static char HUE_DEVICE_NAME[] = "Küchenlicht";
 
 // use reset idea from https://github.com/datacute/DoubleResetDetector
@@ -47,11 +35,11 @@ static char HUE_DEVICE_NAME[] = "Küchenlicht";
 
 class Config {
 public:
-    static const unsigned long MOTION_TIMEOUT = 0; // millis, 0 disables motion
-    static const int MAX_PHOTO_INTENSITY = 100;
+    static const unsigned long MOTION_TIMEOUT = 35; // seconds, 0 disables motion
+    static const int MAX_PHOTO_INTENSITY = 125;
 
     String device_name;
-    unsigned long motion_timeout;
+    unsigned long motion_timeout_sec;
     int max_photo_intensity;
     Config();
     ~Config();
@@ -60,27 +48,29 @@ public:
     void handle_root();
     bool is_connected();
     bool has_motion();
-    void should_save_config();
     void save_ansulta_address(byte address_a, byte address_b);
     byte get_ansulta_address_a();
     byte get_ansulta_address_b();
 
 protected:
-    //flag for saving data
-    bool pShouldSaveConfig;
     byte pAnsultaAddressA;
     byte pAnsultaAddressB;
     bool p_has_motion;
-    void p_save_config();
     bool has_flag(int address, uint32_t flag);
     void set_flag(int address, uint32_t flag);
-    // WiFiManager wifiManager;
+    // web configuration parameter
     DNSServer pDnsServer;
+    HTTPUpdateServer pHttpUpdater;
     WebServer *pServer;
     IotWebConf *pIotWebConf;
-    String ssid_selector;
-    IotWebConfParameter *ssidParam;
-    char ssidValue[NUMBER_LEN];
+    String pSSIDselectorString;
+    IotWebConfSeparator pAnsultaSeparator;
+    IotWebConfParameter pIotParamAnsultaAddressA;
+    IotWebConfParameter pIotParamAnsultaAddressB;
+    IotWebConfSeparator pMotionSeparator;
+    IotWebConfParameter pMotionEnabled;
+    IotWebConfParameter pMotionTimeout;
+    IotWebConfParameter pMotionMaxFotoIntensity;
 };
 
 #endif
