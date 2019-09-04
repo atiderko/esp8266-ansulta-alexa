@@ -12,17 +12,31 @@ It is also possible to reset the configuration by double press
 on reset. The idea is based on
 https://github.com/datacute/DoubleResetDetector
 
+IoTWebConf: https://github.com/prampec/IotWebConf
+
 **************************************************************/
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <IotWebConf.h>
+#define IOTWEBCONF_DEBUG_TO_SERIAL true
+
 #include <FS.h>
 #include <DNSServer.h>
-#include <WiFiManager.h>
+//#include <WiFiManager.h>
 
+// -- Configuration specific key. The value should be modified if config structure was changed.
+#define CONFIG_VERSION "ansulta v2"
 #define CONFIG_FILE "/ansulta_config.json"
-#define ANSULTA_AP "AnsultaAP"
-#define AP_PASSWORD "ansulta"
+#define STRING_LEN 128
+#define NUMBER_LEN 32
+#define STATUS_PIN LED_BUILTIN
+//#define ANSULTA_AP "AnsultaAP"
+//#define AP_PASSWORD "ansulta"
+// -- Initial name of the Thing. Used e.g. as SSID of the own Access Point.
+const char ANSULTA_AP[] = "AnsultaAP";
+// -- Initial password to connect to the Thing, when it creates an own Access Point.
+const char AP_PASSWORD[] = "defaultpw";
 
 static char HUE_DEVICE_NAME[] = "Küchenlicht";
 
@@ -43,6 +57,7 @@ public:
     ~Config();
     void setup();
     void loop();
+    void handle_root();
     bool is_connected();
     bool has_motion();
     void should_save_config();
@@ -59,8 +74,13 @@ protected:
     void p_save_config();
     bool has_flag(int address, uint32_t flag);
     void set_flag(int address, uint32_t flag);
-    WiFiManager wifiManager;
+    // WiFiManager wifiManager;
+    DNSServer pDnsServer;
+    WebServer *pServer;
+    IotWebConf *pIotWebConf;
+    String ssid_selector;
+    IotWebConfParameter *ssidParam;
+    char ssidValue[NUMBER_LEN];
 };
 
 #endif
-

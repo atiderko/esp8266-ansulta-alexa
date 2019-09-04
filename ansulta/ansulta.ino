@@ -21,6 +21,7 @@ MotionDetector motion;
 int motion_state = 0;
 bool saved_ansulta_address = false;
 hue::LightServiceClass lightService(1);
+bool initialized = false;
 
 // Handler used by LightServiceClass to switch the ansulta lights
 class AnsultaHandler : public hue::LightHandler {
@@ -96,23 +97,28 @@ void setup()
     // init blue LED on board
     led.init();
     cfg.setup();
-    saved_ansulta_address = ansulta.set_address(cfg.get_ansulta_address_a(), cfg.get_ansulta_address_b());
-    lightService.begin();
-    settimeofday_cb(time_is_set);
-    // Sync our clock to NTP
-    configTime(TZ_SEC, DST_SEC, "pool.ntp.org");
-    ansulta.init();
-    DEBUG_PRINTLN("Adding ansulta light switch");
-    AnsultaHandler* ansulta_handler = new AnsultaHandler();
-    lightService.setLightHandler(0, *ansulta_handler);
-    motion.init(ansulta, cfg.motion_timeout, cfg.max_photo_intensity);
-    ansulta.add_handler(&motion);
 }
  
 void loop()
 {
-    led.set_connection_state(led.NOT_CONNECTED);
+    //led.set_connection_state(led.NOT_CONNECTED);
+    cfg.loop();
+    return;
     if (cfg.is_connected()) {
+        if (!initialized) {
+            saved_ansulta_address = ansulta.set_address(cfg.get_ansulta_address_a(), cfg.get_ansulta_address_b());
+            lightService.begin();
+            settimeofday_cb(time_is_set);
+            // Sync our clock to NTP
+            configTime(TZ_SEC, DST_SEC, "pool.ntp.org");
+            ansulta.init();
+            DEBUG_PRINTLN("Adding ansulta light switch");
+            AnsultaHandler* ansulta_handler = new AnsultaHandler();
+            lightService.setLightHandler(0, *ansulta_handler);
+            motion.init(ansulta, cfg.motion_timeout, cfg.max_photo_intensity);
+            ansulta.add_handler(&motion);
+            initialized = true;
+        }
         lightService.update();
         delay(10);
         if (ansulta.valid_address()) {
@@ -131,11 +137,11 @@ void loop()
         }
   	} else if (ansulta.valid_address()) {
         led.set_connection_state(led.WIFI_CONNECTING);
-        delay(100);
+//        delay(100);
   	}
     led.update();
     ansulta.serverLoop();
-    delay(10);
+//    delay(10);
     if (cfg.has_motion()) {
         int mresult = motion.loop();
         if (motion_state != mresult) {
@@ -151,4 +157,3 @@ void loop()
         }
     }
 }
-

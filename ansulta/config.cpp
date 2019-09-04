@@ -37,16 +37,63 @@ Config::Config()
     pAnsultaAddressA = 0x00;
     pAnsultaAddressB = 0x00;
     p_has_motion = motion_timeout > 0;
+    pServer = new WebServer(80);
+    pIotWebConf = new IotWebConf(ANSULTA_AP, &pDnsServer, pServer, AP_PASSWORD, CONFIG_VERSION);
 }
 
 Config::~Config()
 {
     reference = NULL;
+    delete pIotWebConf;
+    delete pServer;
+    delete ssidParam;
+}
+
+int getRSSIasQuality(int RSSI) {
+  int quality = 0;
+
+  if (RSSI <= -100) {
+    quality = 0;
+  } else if (RSSI >= -50) {
+    quality = 100;
+  } else {
+    quality = 2 * (RSSI + 100);
+  }
+  return quality;
 }
 
 void Config::setup()
 {
+    // -- Initializing the configuration.
+    pIotWebConf->setStatusPin(STATUS_PIN);
+    int numberOfNetworks = WiFi.scanNetworks();
+
+    ssid_selector = "<div class=\"\"><label for=\"iwcWifiSsid\">WiFi SSID</label><div class=\"\" style=\"padding:0px;font-size:1em;width:100%;\"><select type=\"text\" id=\"iwcWifiSsid\" name=\"iwcWifiSsid\" maxlength=33 value=\"\"/>";
+    //ssid_selector = "<select name=\"iwcWifiSsid\">";
+    for (int i = 0; i < numberOfNetworks; i++){
+        ssid_selector = ssid_selector + "<option value=\"" + WiFi.SSID(i) + "\">" + WiFi.SSID(i) + " (" + getRSSIasQuality(WiFi.RSSI(i)) + "%)</option>";
+    }
+    ssid_selector = ssid_selector + "</select></div></div>";
+    Serial.println(ssid_selector);
+    pIotWebConf->getWifiSsidParameter()->label = NULL;
+    pIotWebConf->getWifiSsidParameter()->customHtml = ssid_selector.c_str();
+    //pIotWebConf->getWifiSsidParameter()-> IotWebConfParameter(NULL, "ssid", ssidValue, STRING_LEN, "text", "ssid", "", ssid_selector.c_str(), true);
+    //pIotWebConf->addParameter(ssidParam);
+    pIotWebConf->init();
+    
+    // -- Set up required URL handlers on the web server.
+    pServer->on("/", [&]() { handle_root(); });
+    pServer->on("/config", [&]{ pIotWebConf->handleConfig(); });
+    pServer->onNotFound([&](){ pIotWebConf->handleNotFound(); });
+    
+
     bool remove_cfg = false;
+
+    return;
+
+
+    /////////
+/**
     if (has_flag(RESET_UTC_ADDRESS, RESET_FLAG)) {
       //
       DEBUG_PRINTLN("RESET detected, remove configuration");
@@ -139,16 +186,33 @@ void Config::setup()
 
     DEBUG_PRINT("local ip: ");
     DEBUG_PRINTLN(WiFi.localIP());
+**/
 }
 
 void Config::loop()
 {
-    
+    pIotWebConf->doLoop();
+}
+
+void Config::handle_root()
+{
+    // -- Let IotWebConf test and handle captive portal requests.
+    if (pIotWebConf->handleCaptivePortal())
+    {
+      // -- Captive portal request were already served.
+      return;
+    }
+    String s = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/>";
+    s += "<title>IotWebConf 02 Status and Reset</title></head><body>Hello world!";
+    s += "Go to <a href='config'>configure page</a> to change settings.";
+    s += "</body></html>\n";
+    pServer->send(200, "text/html", s);
 }
 
 bool Config::is_connected()
 {
-  return (WiFi.status() == WL_CONNECTED);
+  return (pIotWebConf->getState() == IOTWEBCONF_STATE_ONLINE);
+  //return (WiFi.status() == WL_CONNECTED);
 }
 
 bool Config::has_motion()
