@@ -12,7 +12,7 @@
 #include "HueTypes.h"
 #include "HueLightService.h"
 #include "motion_detector.h"
-
+#include "AnsultaLightHandler.h"
 
 Config cfg;
 OnBoardLED led;
@@ -22,60 +22,6 @@ int motion_state = 0;
 bool saved_ansulta_address = false;
 hue::LightServiceClass lightService(1);
 bool initialized = false;
-
-// Handler used by LightServiceClass to switch the ansulta lights
-class AnsultaHandler : public hue::LightHandler {
-  private:
-    hue::LightInfo _info;
-  public:
-    AnsultaHandler() {
-        _info.bulbType =  hue::BulbType::DIMMABLE_LIGHT;
-    }
-    String getFriendlyName(int lightNumber) const {
-        return cfg.device_name;  // defined in config.h
-    }
-    void handleQuery(int lightNumber, hue::LightInfo newInfo, JsonObject& raw) {
-        int brightness = newInfo.brightness;
-        DEBUG_PRINT("ON: ");
-        DEBUG_PRINTLN(newInfo.on);
-        DEBUG_PRINT("brightness: ");
-        DEBUG_PRINTLN(brightness);
-        if (newInfo.on) {
-            if (brightness == 0 || brightness == 1) {
-                brightness = 254;
-            }
-            DEBUG_PRINT("turn on " + this->getFriendlyName(lightNumber));
-            if (ansulta.get_brightness() > 0 && brightness <= 127) {
-                led.blink(2, 300);
-                DEBUG_PRINTLN(" to 50%");
-                ansulta.light_ON_50(50, true, brightness);
-            } else {
-                led.blink(3, 300);
-                DEBUG_PRINTLN(" to 100%");
-                ansulta.light_ON_100(50, true, brightness);
-            }
-        } else {
-            // switch off
-            brightness = 1;
-            DEBUG_PRINTLN("turn off " + this->getFriendlyName(lightNumber));
-            led.blink(1, 300);
-            ansulta.light_OFF(50, true, brightness);
-        }
-        _info.on = newInfo.on;
-        _info.brightness = brightness;
-    }
-    hue::LightInfo getInfo(int lightNumber) {
-        _info.on = ansulta.get_state() != ansulta.OFF;
-        if (ansulta.get_state() == ansulta.OFF) {
-            _info.brightness = ansulta.get_brightness();
-        } else if (ansulta.get_state() == ansulta.ON_50) {
-            _info.brightness = ansulta.get_brightness();
-        } else if (ansulta.get_state() == ansulta.ON_100) {
-            _info.brightness = ansulta.get_brightness();
-        }
-        return _info;
-    }
-};
 
 // defines used to set NTP date
 #define TZ              1       // (utc+) TZ in hours
@@ -113,7 +59,7 @@ void loop()
             configTime(TZ_SEC, DST_SEC, "pool.ntp.org");
             ansulta.init();
             DEBUG_PRINTLN("Adding ansulta light switch");
-            AnsultaHandler* ansulta_handler = new AnsultaHandler();
+            AnsultaLightHandler* ansulta_handler = new AnsultaLightHandler(&ansulta, &cfg, &led);
             lightService.setLightHandler(0, *ansulta_handler);
             motion.init(ansulta, cfg.motion_timeout, cfg.max_photo_intensity);
             ansulta.add_handler(&motion);
