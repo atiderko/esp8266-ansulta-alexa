@@ -35,6 +35,7 @@ class MotionDetector : public AnsultaCallback {
     
     unsigned long p_md1_ts_detection;
     unsigned long p_motion_ts_deactivated;
+    unsigned long p_ts_photo_intensity_mes;
     unsigned long p_light_ts_manual_off;
     unsigned long p_light_ts_manual_intervantion;
     

@@ -24,6 +24,7 @@ MotionDetector::MotionDetector() {
     p_count_disable = 0;
     p_count_detected = 0;
     p_motion_ts_deactivated = 0;
+    p_ts_photo_intensity_mes = 0;
     p_light_ts_manual_off = 0;
     p_md1_ts_detection = 0;
     p_light_ts_manual_intervantion = 0;
@@ -58,6 +59,12 @@ int MotionDetector::loop() {
         // motion detection for 5 seconds because of last manual intervantion by ansulta control
         return 0;
     }
+    // read photo intensity
+    if (current_time - p_ts_photo_intensity_mes > 500) {
+        int photo_state = analogRead(p_photo_pin);
+        p_photo_state_smooth = p_photo_state_smooth * 0.9 + photo_state * 0.1;
+        p_ts_photo_intensity_mes = current_time;
+    }
     // handle motion detection
     bool is_on = p_light_state != Ansulta::OFF;
     int md1_state = digitalRead(p_md1_pin);
@@ -69,8 +76,6 @@ int MotionDetector::loop() {
         // DEBUG_PRINTLN();
         p_md1_ts_detection = current_time;
         if (!is_on && p_count_detected > 1) {
-          int photo_state = analogRead(p_photo_pin);
-          p_photo_state_smooth = p_photo_state_smooth * 0.8 + photo_state * 0.2;
           DEBUG_PRINT("photo value: ");
           DEBUG_PRINT(photo_state);
           DEBUG_PRINT(", smooth: ");
