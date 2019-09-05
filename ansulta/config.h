@@ -36,11 +36,11 @@ static char HUE_DEVICE_NAME[] = "Küchenlicht";
 
 class Config {
 public:
-    static const unsigned long MOTION_TIMEOUT = 35; // seconds, 0 disables motion
+    static const int MOTION_TIMEOUT = 35; // seconds, 0 disables motion
     static const int MAX_PHOTO_INTENSITY = 125;
 
     String device_name;
-    unsigned long motion_timeout_sec;
+    int motion_timeout_sec;
     int max_photo_intensity;
     Config();
     ~Config();
@@ -67,6 +67,8 @@ protected:
     WebServer *pServer;
     IotWebConf *pIotWebConf;
     String pSSIDselectorString;
+    const char* pCharDefaultTimeout;
+    const char* pCharDefaultMPI;
     char pDeviceNamePValue[STRING_LEN];
     char pIotParamAnsultaAddressAPValue[NUMBER_LEN];
     char pIotParamAnsultaAddressBPValue[NUMBER_LEN];

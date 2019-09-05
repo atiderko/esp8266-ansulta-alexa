@@ -11,6 +11,7 @@ Licensed under MIT license
 
 #include "debug.h"
 #include "config.h"
+#include "Ansulta.h"
 #include "OnBoardLED.h"
 #include "HueTypes.h"
 #include "HueLightService.h"
