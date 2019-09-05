@@ -29,3 +29,5 @@ class AnsultaLightHandler : public hue::LightHandler {
     void handleQuery(int lightNumber, hue::LightInfo newInfo, JsonObject& raw);
     hue::LightInfo getInfo(int lightNumber);
 };
+
+#endif

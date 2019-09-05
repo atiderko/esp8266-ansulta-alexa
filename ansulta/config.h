@@ -21,6 +21,7 @@ https://github.com/datacute/DoubleResetDetector
 
 // -- Configuration specific key. The value should be modified if config structure was changed.
 #define CONFIG_VERSION "ansulta v2"
+#define STRING_LEN 128
 #define NUMBER_LEN 32
 #define STATUS_PIN LED_BUILTIN
 
@@ -64,6 +65,12 @@ protected:
     WebServer *pServer;
     IotWebConf *pIotWebConf;
     String pSSIDselectorString;
+    char pDeviceNamePValue[STRING_LEN];
+    char pIotParamAnsultaAddressAPValue[NUMBER_LEN];
+    char pIotParamAnsultaAddressBPValue[NUMBER_LEN];
+    char pMotionEnabledPValue[NUMBER_LEN];
+    char pMotionTimeoutPValue[NUMBER_LEN];
+    char pMotionMaxFotoIntensityPValue[NUMBER_LEN];
     IotWebConfParameter pDeviceName;
     IotWebConfSeparator pAnsultaSeparator;
     IotWebConfParameter pIotParamAnsultaAddressA;

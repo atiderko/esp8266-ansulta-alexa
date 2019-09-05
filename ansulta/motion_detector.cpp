@@ -64,6 +64,11 @@ int MotionDetector::loop() {
         int photo_state = analogRead(p_photo_pin);
         p_photo_state_smooth = p_photo_state_smooth * 0.9 + photo_state * 0.1;
         p_ts_photo_intensity_mes = current_time;
+        DEBUG_PRINT("photo value: ");
+        DEBUG_PRINT(photo_state);
+        DEBUG_PRINT(", smooth: ");
+        DEBUG_PRINT(p_photo_state_smooth);
+        DEBUG_PRINTLN();
     }
     // handle motion detection
     bool is_on = p_light_state != Ansulta::OFF;
@@ -76,10 +81,6 @@ int MotionDetector::loop() {
         // DEBUG_PRINTLN();
         p_md1_ts_detection = current_time;
         if (!is_on && p_count_detected > 1) {
-          DEBUG_PRINT("photo value: ");
-          DEBUG_PRINT(photo_state);
-          DEBUG_PRINT(", smooth: ");
-          DEBUG_PRINT(p_photo_state_smooth);
           if (p_photo_state_smooth <= p_max_photo_intensity) {
               if (p_photo_state_smooth < (p_max_photo_intensity / 3)) {
                   DEBUG_PRINT(" > on 50%");

@@ -9,6 +9,7 @@ Licensed under MIT license
 **************************************************************/
 #include "config.h"
 #include "debug.h"
+#include "EEPROM.h"
 
 static Config* reference = NULL;
 
@@ -16,7 +17,7 @@ static Config* reference = NULL;
 Config::Config()
 {
     device_name = HUE_DEVICE_NAME;
-    motion_timeout = MOTION_TIMEOUT;
+    motion_timeout_sec = MOTION_TIMEOUT;
     max_photo_intensity = MAX_PHOTO_INTENSITY; 
     pAnsultaAddressA = 0x00;
     pAnsultaAddressB = 0x00;
@@ -29,7 +30,6 @@ Config::~Config()
     reference = NULL;
     delete pIotWebConf;
     delete pServer;
-    delete ssidParam;
 }
 
 int getRSSIasQuality(int RSSI) {
@@ -55,7 +55,7 @@ void Config::setup()
             EEPROM.begin(IOTWEBCONF_CONFIG_START + IOTWEBCONF_CONFIG_VESION_LENGTH);
             EEPROM.write(IOTWEBCONF_CONFIG_START + t, 0);
             delay(200);
-            EEPROM.commit():
+            EEPROM.commit();
             EEPROM.end();
         }
     }
@@ -94,6 +94,7 @@ void Config::setup()
     pIotWebConf->addParameter(&pIotParamAnsultaAddressA);
     pIotWebConf->addParameter(&pIotParamAnsultaAddressB);
     pIotWebConf->setupUpdateServer(&pHttpUpdater);
+    iotWebConf.setConfigSavedCallback(&configSaved);
     pIotWebConf->init();
     
     // -- Set up required URL handlers on the web server.
