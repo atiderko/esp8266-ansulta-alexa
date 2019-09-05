@@ -75,16 +75,16 @@ void Config::setup()
         pIotWebConf->getWifiSsidParameter()->label = NULL;
         pIotWebConf->getWifiSsidParameter()->customHtml = pSSIDselectorString.c_str();
     }
-    pDeviceName = IotWebConfParameter("Device name", "deviceName", device_name, 128, "text", HUE_DEVICE_NAME, HUE_DEVICE_NAME, NULL, true);
+    pDeviceName = IotWebConfParameter("Device name", "deviceName", pDeviceNamePValue, 128, "text", HUE_DEVICE_NAME, HUE_DEVICE_NAME, NULL, true);
     // add settings for motion detection
     pMotionSeparator = IotWebConfSeparator("Motion Detection");
-    pMotionEnabled = IotWebConfParameter(NULL, "mdEnabled", p_has_motion, NUMBER_LEN, "number", "0,1", 0, "<div class=\"\"><label for=\"mdEnabled\">Enabled</label><div class=\"\" style=\"padding:0px;font-size:1em;width:100%;\"><select type=\"text\" id=\"mdEnabled\" name=\"mdEnabled\" maxlength=1 value=\"\"/><option value=\"" + p_has_motion + "\">" + p_has_motion + "</option><option value=\"" + !p_has_motion + "\">" + !p_has_motion + "</option></select></div></div>", true);
-    pMotionTimeout = IotWebConfParameter("Timeout", "mdTimeout", motion_timeout_sec, NUMBER_LEN, "number", MAX_PHOTO_INTENSITY, MAX_PHOTO_INTENSITY, "seconds until off", true);
-    pMotionMaxFotoIntensity = IotWebConfParameter("Max photo intensity", "mdMaxPhotoIntensity", max_photo_intensity, NUMBER_LEN, "number", MAX_PHOTO_INTENSITY, MAX_PHOTO_INTENSITY, "smaller value turn on light on day", true);
+    pMotionEnabled = IotWebConfParameter(NULL, "mdEnabled", pMotionEnabledPValue, NUMBER_LEN, "number", "0,1", 0, "<div class=\"\"><label for=\"mdEnabled\">Enabled</label><div class=\"\" style=\"padding:0px;font-size:1em;width:100%;\"><select type=\"text\" id=\"mdEnabled\" name=\"mdEnabled\" maxlength=1 value=\"\"/><option value=\"" + p_has_motion + "\">" + p_has_motion + "</option><option value=\"" + !p_has_motion + "\">" + !p_has_motion + "</option></select></div></div>", true);
+    pMotionTimeout = IotWebConfParameter("Timeout", "mdTimeout", pMotionTimeoutPValue, NUMBER_LEN, "number", MAX_PHOTO_INTENSITY, MAX_PHOTO_INTENSITY, "seconds until off", true);
+    pMotionMaxFotoIntensity = IotWebConfParameter("Max photo intensity", "mdMaxPhotoIntensity", pMotionMaxFotoIntensityPValue, NUMBER_LEN, "number", MAX_PHOTO_INTENSITY, MAX_PHOTO_INTENSITY, "smaller value turn on light on day", true);
     // add settings for ansulta
     pAnsultaSeparator = IotWebConfSeparator("Ansulta address (autodetect)");
-    pIotParamAnsultaAddressA = IotWebConfParameter("AddressA", "ansulta_address_a", pAnsultaAddressA, NUMBER_LEN, "number", "0..256", NULL, "0: autodetect", true);
-    pIotParamAnsultaAddressB = IotWebConfParameter("AddressB", "ansulta_address_b", pAnsultaAddressB, NUMBER_LEN, "number", "0..256", NULL, "0: autodetect", true);
+    pIotParamAnsultaAddressA = IotWebConfParameter("AddressA", "ansulta_address_a", pIotParamAnsultaAddressAPValue, NUMBER_LEN, "number", "0..256", NULL, "0: autodetect", true);
+    pIotParamAnsultaAddressB = IotWebConfParameter("AddressB", "ansulta_address_b", pIotParamAnsultaAddressBPValue, NUMBER_LEN, "number", "0..256", NULL, "0: autodetect", true);
     pIotWebConf->addParameter(&pDeviceName);
     pIotWebConf->addParameter(&pMotionSeparator);
     pIotWebConf->addParameter(&pMotionEnabled);
@@ -94,13 +94,24 @@ void Config::setup()
     pIotWebConf->addParameter(&pIotParamAnsultaAddressA);
     pIotWebConf->addParameter(&pIotParamAnsultaAddressB);
     pIotWebConf->setupUpdateServer(&pHttpUpdater);
-    iotWebConf.setConfigSavedCallback(&configSaved);
+    pIotWebConf->setConfigSavedCallback([&]() { config_saved(); });
     pIotWebConf->init();
+    p_convert_cfg_values();
     
     // -- Set up required URL handlers on the web server.
     pServer->on("/", [&]() { handle_root(); });
     pServer->on("/config", [&]{ pIotWebConf->handleConfig(); });
     pServer->onNotFound([&](){ pIotWebConf->handleNotFound(); });
+}
+
+void Config::p_convert_cfg_values()
+{
+    device_name = String(pDeviceNamePValue);
+    p_has_motion = atoi(pMotionEnabledPValue);
+    motion_timeout_sec = atoi(pMotionTimeoutPValue);
+    max_photo_intensity = atoi(pMotionMaxFotoIntensityPValue);
+    pAnsultaAddressA = atoi(pIotParamAnsultaAddressAPValue);
+    pAnsultaAddressB = atoi(pIotParamAnsultaAddressBPValue);
 }
 
 void Config::loop()
@@ -118,13 +129,40 @@ void Config::handle_root()
     }
     String s = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/>";
     s += "<title>Alexa ESP8266 Ansulta controller/title></head><body>Alexa ESP8266 Ansulta controller<br>";
-    s += "Go to <a href='config'>configure page</a> to change settings.<br>";
     s += "Default AP password: " + AP_PASSWORD;
     if (pAnsultaAddressA == 0x00 || pAnsultaAddressA == 0x00) {
         s += "<b>Waiting for ansulta control signal!</b>.<br>";
     }
+    s += "<ul>";
+    s += "<li>Device name: ";
+    s += device_name;
+    s += "<li>Motion Detection: ";
+    if (p_has_motion) {
+        s += "enabled";
+        s += "<ul>";
+        s += "<li>Timeout: ";
+        s += motion_timeout_sec;
+        s += " sec"
+        s += "<li>Max photo intensity: ";
+        s += max_photo_intensity;
+        s += "</ul>";
+    } else {
+        s += "disabled";
+    }
+    s += "<li>Ansulta address: ";
+    s += pAnsultaAddressA;
+    s += ":";
+    s += pAnsultaAddressB;
+    s += "</ul>";
+    s += "Go to <a href='config'>configure page</a> to change settings.<br>";
     s += "</body></html>\n";
     pServer->send(200, "text/html", s);
+}
+
+void Config::config_saved()
+{
+    p_convert_cfg_values();
+    Serial.println("Configuration was updated.");
 }
 
 bool Config::is_connected()

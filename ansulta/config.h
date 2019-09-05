@@ -46,6 +46,7 @@ public:
     ~Config();
     void setup();
     void loop();
+    void config_saved();
     void handle_root();
     bool is_connected();
     bool has_motion();
@@ -59,6 +60,7 @@ protected:
     bool p_has_motion;
     bool has_flag(int address, uint32_t flag);
     void set_flag(int address, uint32_t flag);
+    void p_convert_cfg_values();
     // web configuration parameter
     DNSServer pDnsServer;
     HTTPUpdateServer pHttpUpdater;
