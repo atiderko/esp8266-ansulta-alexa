@@ -45,7 +45,8 @@ void setup()
     led.init();
     cfg.setup();
 }
- 
+
+
 void loop()
 {
     //led.set_connection_state(led.NOT_CONNECTED);
@@ -85,11 +86,15 @@ void loop()
         led.set_connection_state(led.WIFI_CONNECTING);
 //        delay(100);
   	}
-    led.update();
-    ansulta.serverLoop();
+    if (initialized) {
+        led.update();
+        ansulta.serverLoop();
+    }
 //    delay(10);
     if (cfg.has_motion()) {
         int mresult = motion.loop();
+        cfg.monitor_photo_intensity = motion.current_photo_intensity();
+        cfg.monitor_photo_intensity_smooth = motion.current_photo_intensity_smooth();
         if (motion_state != mresult) {
             DEBUG_PRINT("Motion state: ");
             DEBUG_PRINT(mresult);

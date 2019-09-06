@@ -21,8 +21,10 @@ Config::Config()
     max_photo_intensity = MAX_PHOTO_INTENSITY; 
     pAnsultaAddressA = 0x00;
     pAnsultaAddressB = 0x00;
-    pCharDefaultTimeout = String(MOTION_TIMEOUT).c_str();
-    pCharDefaultMPI = String(MAX_PHOTO_INTENSITY).c_str();
+    monitor_photo_intensity = -1;
+    monitor_photo_intensity_smooth = -1;
+    pCharDefaultTimeout = String(MOTION_TIMEOUT);
+    pCharDefaultMPI = String(MAX_PHOTO_INTENSITY);
     pServer = new WebServer(80);
     pIotWebConf = new IotWebConf(ANSULTA_AP, &pDnsServer, pServer, AP_PASSWORD, CONFIG_VERSION);
 }
@@ -35,16 +37,16 @@ Config::~Config()
 }
 
 int getRSSIasQuality(int RSSI) {
-  int quality = 0;
-
-  if (RSSI <= -100) {
-    quality = 0;
-  } else if (RSSI >= -50) {
-    quality = 100;
-  } else {
-    quality = 2 * (RSSI + 100);
-  }
-  return quality;
+    int quality = 0;
+  
+    if (RSSI <= -100) {
+        quality = 0;
+    } else if (RSSI >= -50) {
+        quality = 100;
+    } else {
+        quality = 2 * (RSSI + 100);
+    }
+    return quality;
 }
 
 void Config::setup()
@@ -77,18 +79,25 @@ void Config::setup()
         pIotWebConf->getWifiSsidParameter()->label = NULL;
         pIotWebConf->getWifiSsidParameter()->customHtml = pSSIDselectorString.c_str();
     }
-    pDeviceName = IotWebConfParameter("Device name", "deviceName", pDeviceNamePValue, 128, "text", HUE_DEVICE_NAME, HUE_DEVICE_NAME, NULL, true);
+    pDeviceName = IotWebConfParameter("Device name", "deviceName", pDeviceNamePValue, STRING_LEN, "text", HUE_DEVICE_NAME, HUE_DEVICE_NAME, NULL, true);
     // add settings for motion detection
     pMotionSeparator = IotWebConfSeparator("Motion Detection");
-    String mEnableStr;
-    mEnableStr = mEnableStr + "<div class=\"\"><label for=\"mdEnabled\">Enabled</label><div class=\"\" style=\"padding:0px;font-size:1em;width:100%;\"><select type=\"text\" id=\"mdEnabled\" name=\"mdEnabled\" maxlength=1 value=\"\"/><option value=\"" + p_has_motion + "\">" + p_has_motion + "</option><option value=\"" + !p_has_motion + "\">" + !p_has_motion + "</option></select></div></div>";
-    pMotionEnabled = IotWebConfParameter(NULL, "mdEnabled", pMotionEnabledPValue, NUMBER_LEN, "number", "0,1", 0, mEnableStr.c_str(), true);
-    pMotionTimeout = IotWebConfParameter("Timeout", "mdTimeout", pMotionTimeoutPValue, NUMBER_LEN, "number", pCharDefaultTimeout, pCharDefaultTimeout, "seconds until off", true);
-    pMotionMaxFotoIntensity = IotWebConfParameter("Max photo intensity", "mdMaxPhotoIntensity", pMotionMaxFotoIntensityPValue, NUMBER_LEN, "number", pCharDefaultMPI, pCharDefaultMPI, "smaller value turn on light on day", true);
+    pMDselectorString = pMDselectorString + "<div class=\"\"><label for=\"mdEnabled\">Enabled: </label><select type=\"text\" id=\"mdEnabled\" name=\"mdEnabled\" maxlength=1 value=\"\"/><option value=\"" + p_has_motion + "\">" + p_has_motion + "</option><option value=\"" + !p_has_motion + "\">" + !p_has_motion + "</option></select></div>";
+    Serial.println(pMDselectorString);
+    pMotionEnabled = IotWebConfParameter(NULL, "mdEnabled", pMotionEnabledPValue, NUMBER_LEN, "number", "0,1", 0, pMDselectorString.c_str(), true);
+    pMotionTimeout = IotWebConfParameter("Timeout (seconds until off)", "mdTimeout", pMotionTimeoutPValue, NUMBER_LEN, "number", pCharDefaultTimeout.c_str(), pCharDefaultTimeout.c_str(), NULL, true);
+    pMotionMaxFotoIntensity = IotWebConfParameter("Max photo intensity", "mdMaxPhotoIntensity", pMotionMaxFotoIntensityPValue, NUMBER_LEN, "number", pCharDefaultMPI.c_str(), pCharDefaultMPI.c_str(), NULL, true);
     // add settings for ansulta
-    pAnsultaSeparator = IotWebConfSeparator("Ansulta address (autodetect)");
-    pIotParamAnsultaAddressA = IotWebConfParameter("AddressA", "ansulta_address_a", pIotParamAnsultaAddressAPValue, NUMBER_LEN, "number", "0..256", NULL, "0: autodetect", true);
-    pIotParamAnsultaAddressB = IotWebConfParameter("AddressB", "ansulta_address_b", pIotParamAnsultaAddressBPValue, NUMBER_LEN, "number", "0..256", NULL, "0: autodetect", true);
+    pAnsultaSeparator = IotWebConfSeparator("Ansulta address (0: autodetected)");
+    pIotParamAnsultaAddressA = IotWebConfParameter("AddressA", "ansulta_address_a", pIotParamAnsultaAddressAPValue, NUMBER_LEN, "number", "0..256", NULL, NULL, true);
+    pIotParamAnsultaAddressB = IotWebConfParameter("AddressB", "ansulta_address_b", pIotParamAnsultaAddressBPValue, NUMBER_LEN, "number", "0..256", NULL, NULL, true);
+    // clear errors by setting errorMessage to NULL
+    pDeviceName.errorMessage = NULL;
+    pMotionEnabled.errorMessage = NULL;
+    pMotionTimeout.errorMessage = NULL;
+    pMotionMaxFotoIntensity.errorMessage = NULL;
+    pIotParamAnsultaAddressA.errorMessage = NULL;
+    pIotParamAnsultaAddressB.errorMessage = NULL;
     pIotWebConf->addParameter(&pDeviceName);
     pIotWebConf->addParameter(&pMotionSeparator);
     pIotWebConf->addParameter(&pMotionEnabled);
@@ -99,6 +108,8 @@ void Config::setup()
     pIotWebConf->addParameter(&pIotParamAnsultaAddressB);
     pIotWebConf->setupUpdateServer(&pHttpUpdater);
     pIotWebConf->setConfigSavedCallback([&]() { config_saved(); });
+    //pIotWebConf->setFormValidator(std::bind(&Config::form_validator, this));
+    pIotWebConf->setFormValidator([&]() { return form_validator(); });
     pIotWebConf->init();
     p_convert_cfg_values();
     
@@ -110,10 +121,10 @@ void Config::setup()
 
 void Config::p_convert_cfg_values()
 {
-    device_name = String(pDeviceNamePValue);
-    p_has_motion = atoi(pMotionEnabledPValue);
-    motion_timeout_sec = atoi(pMotionTimeoutPValue);
-    max_photo_intensity = atoi(pMotionMaxFotoIntensityPValue);
+    device_name = strlen(pDeviceNamePValue) == 0 ? HUE_DEVICE_NAME : String(pDeviceNamePValue);
+    p_has_motion = strlen(pMotionEnabledPValue) == 0 ? false : atoi(pMotionEnabledPValue);
+    motion_timeout_sec = strlen(pMotionTimeoutPValue) == 0 ? MOTION_TIMEOUT : atoi(pMotionTimeoutPValue);
+    max_photo_intensity = strlen(pMotionMaxFotoIntensityPValue) == 0 ? MAX_PHOTO_INTENSITY : atoi(pMotionMaxFotoIntensityPValue);
     pAnsultaAddressA = atoi(pIotParamAnsultaAddressAPValue);
     pAnsultaAddressB = atoi(pIotParamAnsultaAddressBPValue);
 }
@@ -131,35 +142,44 @@ void Config::handle_root()
       // -- Captive portal request were already served.
       return;
     }
-    String s = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/>";
-    s += "<title>Alexa ESP8266 Ansulta controller/title></head><body>Alexa ESP8266 Ansulta controller<br>";
-    s += "Default AP password: ";
-    s += AP_PASSWORD;
-    if (pAnsultaAddressA == 0x00 || pAnsultaAddressA == 0x00) {
-        s += "<b>Waiting for ansulta control signal!</b>.<br>";
-    }
+    String s = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\" charset=\"UTF-8\"/>";
+    //s += "<title>Alexa ESP8266 Ansulta controller/title></head><body>Alexa ESP8266 Ansulta controller";
+    s += "<title>Ansulta controller</title></head><body><h1>Alexa ESP8266 Ansulta controller</h1>";
+    s += "<p>AP defaults (user: <i>admin</i> pw: <i>" + String(AP_PASSWORD) + "</i>)</p>";
     s += "<ul>";
-    s += "<li>Device name: ";
+    s += "<li>Current SSID: ";
+    if (is_connected()) {
+        s += pIotWebConf->getWifiSsidParameter()->valueBuffer;
+    } else if (strlen(pIotWebConf->getWifiSsidParameter()->valueBuffer) == 0) {
+        s += "not configured";
+    } else {
+        s += pIotWebConf->getWifiSsidParameter()->valueBuffer;
+        s += "not connected";
+    }
+    s += "</li><li>Device name: ";
     s += device_name;
-    s += "<li>Motion Detection: ";
+    s += "</li><li>Motion Detection: ";
     if (p_has_motion) {
         s += "enabled";
         s += "<ul>";
-        s += "<li>Timeout: ";
-        s += motion_timeout_sec;
-        s += " sec";
-        s += "<li>Max photo intensity: ";
-        s += max_photo_intensity;
+        s += "<li>Timeout: " + String(motion_timeout_sec) + " sec</li>";
+        s += "<li>Max photo intensity: " + String(max_photo_intensity) + "</li>";
         s += "</ul>";
     } else {
         s += "disabled";
     }
-    s += "<li>Ansulta address: ";
-    s += pAnsultaAddressA;
-    s += ":";
-    s += pAnsultaAddressB;
-    s += "</ul>";
-    s += "Go to <a href='config'>configure page</a> to change settings.<br>";
+    s += "</li><li>Ansulta address: ";
+    if (pAnsultaAddressA == 0x00 || pAnsultaAddressA == 0x00) {
+        s += "<b>Waiting for ansulta control signal!</b>";
+    } else {
+        s += String(pAnsultaAddressA) + ":" + String(pAnsultaAddressB);
+    }
+    s += "</li><li>Current photo intensity: ";
+    s += (monitor_photo_intensity == -1) ? "---" : String(monitor_photo_intensity);
+    s += " (smooth: ";
+    s += (monitor_photo_intensity_smooth == -1) ? "---" : String(monitor_photo_intensity_smooth);
+    s += ")</li></ul>";
+    s += "Go to <a href='config'>configure page</a> to change settings.";
     s += "</body></html>\n";
     pServer->send(200, "text/html", s);
 }
@@ -167,12 +187,24 @@ void Config::handle_root()
 void Config::config_saved()
 {
     p_convert_cfg_values();
-    Serial.println("Configuration was updated.");
+    DEBUG_PRINTLN("Configuration was updated, values updated!");
+}
+
+boolean Config::form_validator()
+{
+    DEBUG_PRINTLN("TODO: validate input fields!");
+    pDeviceName.errorMessage = NULL;
+    pMotionEnabled.errorMessage = NULL;
+    pMotionTimeout.errorMessage = NULL;
+    pMotionMaxFotoIntensity.errorMessage = NULL;
+    pIotParamAnsultaAddressA.errorMessage = NULL;
+    pIotParamAnsultaAddressB.errorMessage = NULL;
+    return true;
 }
 
 bool Config::is_connected()
 {
-  return (pIotWebConf->getState() == IOTWEBCONF_STATE_ONLINE);
+    return (pIotWebConf->getState() == IOTWEBCONF_STATE_ONLINE);
 }
 
 bool Config::has_motion()
@@ -199,9 +231,9 @@ byte Config::get_ansulta_address_b()
 
 bool Config::has_flag(int address, uint32_t flag)
 {
-  uint32_t read_flag;
-  ESP.rtcUserMemoryRead(address, &read_flag, sizeof(read_flag));
-  return read_flag == flag;
+    uint32_t read_flag;
+    ESP.rtcUserMemoryRead(address, &read_flag, sizeof(read_flag));
+    return read_flag == flag;
 }
 
 void Config::set_flag(int address, uint32_t flag)

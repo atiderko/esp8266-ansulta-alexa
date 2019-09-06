@@ -42,12 +42,15 @@ public:
     String device_name;
     int motion_timeout_sec;
     int max_photo_intensity;
+    int monitor_photo_intensity;
+    int monitor_photo_intensity_smooth;
     Config();
     ~Config();
     void setup();
     void loop();
     void config_saved();
     void handle_root();
+    boolean form_validator();
     bool is_connected();
     bool has_motion();
     void save_ansulta_address(byte address_a, byte address_b);
@@ -67,8 +70,9 @@ protected:
     WebServer *pServer;
     IotWebConf *pIotWebConf;
     String pSSIDselectorString;
-    const char* pCharDefaultTimeout;
-    const char* pCharDefaultMPI;
+    String pMDselectorString;
+    String pCharDefaultTimeout;
+    String pCharDefaultMPI;
     char pDeviceNamePValue[STRING_LEN];
     char pIotParamAnsultaAddressAPValue[NUMBER_LEN];
     char pIotParamAnsultaAddressBPValue[NUMBER_LEN];

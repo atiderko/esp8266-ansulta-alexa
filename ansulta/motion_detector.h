@@ -19,6 +19,12 @@ class MotionDetector : public AnsultaCallback {
     void light_state_changed(int state, bool by_ansulta_ctrl);
     
     unsigned long msecs();
+    int current_photo_intensity() {
+        return p_photo_state;
+    }
+    int current_photo_intensity_smooth() {
+        return p_photo_state_smooth;
+    }
     
   private:
     Ansulta* p_ansulta;
@@ -31,6 +37,7 @@ class MotionDetector : public AnsultaCallback {
     int p_count_disable;
     int p_count_detected;
     unsigned long p_disable_duration;
+    int p_photo_state;
     int p_photo_state_smooth;
     
     unsigned long p_md1_ts_detection;
