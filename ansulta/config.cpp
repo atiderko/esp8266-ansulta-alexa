@@ -169,7 +169,7 @@ void Config::handle_root()
         s += "disabled";
     }
     s += "</li><li>Ansulta address: ";
-    if (pAnsultaAddressA == 0x00 || pAnsultaAddressA == 0x00) {
+    if (pAnsultaAddressA == 0 && pAnsultaAddressB == 0) {
         s += "<b>Waiting for ansulta control signal!</b>";
     } else {
         s += String(pAnsultaAddressA) + ":" + String(pAnsultaAddressB);
@@ -216,6 +216,8 @@ void Config::save_ansulta_address(byte address_a, byte address_b)
 {
     pAnsultaAddressA = address_a;
     pAnsultaAddressB = address_b;
+    itoa(address_a, pIotParamAnsultaAddressAPValue, 16);
+    itoa(address_b, pIotParamAnsultaAddressBPValue, 16);
     pIotWebConf->configSave();
 }
 
