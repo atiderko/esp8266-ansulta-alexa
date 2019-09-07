@@ -18,6 +18,7 @@ https://github.com/NDBCK/Ansluta-Remote-Controller
 #include "cc2500_VAL.h"
 #include <SPI.h>
 #include "debug.h"
+#include "config.h"
 
 #define MAX_LEARN_TRIES 10        // Tries to receive the code from ansulta remote
 #define REPEATS         1         // Tries to receive the code from ansulta remote
@@ -48,7 +49,7 @@ public:
 
     Ansulta();
     ~Ansulta();
-    void init();
+    void setup(Config& cfg);
     void serverLoop();
     void add_handler(AnsultaCallback *handler);
     bool valid_address();
@@ -62,8 +63,8 @@ public:
     byte get_address_b();
 
 private:
+    Config* p_cfg;
     std::vector<AnsultaCallback *> p_ansulta_handler;
-    bool p_address_found;
     bool p_first_info;
     int p_count_c;
     byte delayA;
@@ -73,8 +74,6 @@ private:
     byte delayE;
     int p_brightness;
     
-    byte AddressByteA;
-    byte AddressByteB;
     byte p_led_state;
 
     int p_count_repeats;

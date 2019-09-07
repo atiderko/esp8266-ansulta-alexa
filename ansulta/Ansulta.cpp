@@ -16,7 +16,6 @@ https://github.com/NDBCK/Ansluta-Remote-Controller
 
 Ansulta::Ansulta()
 {
-  p_address_found = false;
   p_first_info = false;
   p_count_c = 0;
   // delays are in microseconds
@@ -29,8 +28,6 @@ Ansulta::Ansulta()
   delayE = 200;
   p_brightness = 1;
 
-  AddressByteA = 0x00;
-  AddressByteB = 0x00;
   p_led_state = OFF;
   p_count_repeats = 0;
 }
@@ -40,7 +37,8 @@ Ansulta::~Ansulta()
   
 }
 
-void Ansulta::init(){
+void Ansulta::setup(Config& cfg){
+  p_cfg = &cfg;
   pinMode(SS, OUTPUT);
   DEBUG_PRINTLN("Ansulta: Debug mode");
   DEBUG_PRINT("Ansulta: Initialisation");
@@ -58,12 +56,12 @@ void Ansulta::init(){
 void Ansulta::serverLoop()
 {
   //Some demo loop
-  if (!p_address_found) {
+  if (!valid_address()) {
     /*** Read adress from another remote wireless ***/
     /*** Push the button on the original remote ***/
   
     ReadAddressBytes(); //Read Address Bytes From a remote by sniffing its packets wireless
-    if (p_address_found) {
+    if (valid_address()) {
       Serial.print("50%");
       light_ON_50();
       delay(1000);
@@ -82,13 +80,13 @@ void Ansulta::serverLoop()
     p_count_repeats--;
     switch(p_led_state) {
       case ON_50:
-        SendCommand(AddressByteA,AddressByteB, Light_ON_50);
+        SendCommand(p_cfg->get_ansulta_address_a(), p_cfg->get_ansulta_address_b(), Light_ON_50);
         break;
       case ON_100:
-        SendCommand(AddressByteA,AddressByteB, Light_ON_100);
+        SendCommand(p_cfg->get_ansulta_address_a(), p_cfg->get_ansulta_address_b(), Light_ON_100);
         break;
       case OFF:
-        SendCommand(AddressByteA,AddressByteB, Light_OFF);
+        SendCommand(p_cfg->get_ansulta_address_a(), p_cfg->get_ansulta_address_b(), Light_OFF);
         break;
     }
   }
@@ -110,28 +108,27 @@ void Ansulta::inform_handler(int state, bool by_ansulta_ctrl) {
   for (unsigned int idx = 0; idx < p_ansulta_handler.size(); idx++) {
     p_ansulta_handler[idx]->light_state_changed(state, by_ansulta_ctrl);
   }
+  p_cfg->monitor_light_state = state;
 }
 
 bool Ansulta::valid_address() {
-  return p_address_found;
+  return (p_cfg->get_ansulta_address_a() != 0x00 && p_cfg->get_ansulta_address_b() != 0x00);
 }
 
 bool Ansulta::set_address(byte addr_a, byte addr_b)
 {
-  AddressByteA = addr_a;
-  AddressByteB = addr_b;
-  p_address_found = (addr_a != 0x00 && addr_b != 0x00);
-  return p_address_found;
+  p_cfg->save_ansulta_address(addr_a, addr_b);
+  return valid_address();
 }
 
 byte Ansulta::get_address_a()
 {
-  return AddressByteA;
+  return p_cfg->get_ansulta_address_a();
 }
 
 byte Ansulta::get_address_b()
 {
-  return AddressByteB;
+  return p_cfg->get_ansulta_address_b();
 }
 
 int Ansulta::get_brightness()
@@ -145,7 +142,7 @@ void Ansulta::light_ON_50(int count, bool disable_motion_detection, int brightne
   p_count_repeats = REPEATS;
   p_led_state = ON_50;
   p_brightness = brightness;
-  SendCommand(AddressByteA, AddressByteB, Light_ON_50, count);
+  SendCommand(p_cfg->get_ansulta_address_a(), p_cfg->get_ansulta_address_b(), Light_ON_50, count);
   // delay(1000);
   inform_handler(p_led_state, disable_motion_detection);
 }
@@ -156,7 +153,7 @@ void Ansulta::light_ON_100(int count, bool disable_motion_detection, int brightn
   p_count_repeats = REPEATS;
   p_led_state = ON_100;
   p_brightness = brightness;
-  SendCommand(AddressByteA, AddressByteB, Light_ON_100, count);
+  SendCommand(p_cfg->get_ansulta_address_a(), p_cfg->get_ansulta_address_b(), Light_ON_100, count);
   // delay(1000);
   inform_handler(p_led_state, disable_motion_detection);
 }
@@ -167,7 +164,7 @@ void Ansulta::light_OFF(int count, bool disable_motion_detection, int brightness
   p_count_repeats = REPEATS;
   p_led_state = OFF;
   p_brightness = brightness;
-  SendCommand(AddressByteA, AddressByteB, Light_OFF, count);
+  SendCommand(p_cfg->get_ansulta_address_a(), p_cfg->get_ansulta_address_b(), Light_OFF, count);
   // delay(1000);
   inform_handler(p_led_state, disable_motion_detection);
 }
@@ -203,7 +200,7 @@ void Ansulta::read_cmd()
         start++;
       }
       if (recvPacket[start+1] == 0x01 && recvPacket[start+5] == 0xAA){   //If the bytes match an Ikea remote sequence
-        if ( (AddressByteA == recvPacket[start+2]) && (AddressByteB == recvPacket[start+3])) {
+        if ( (p_cfg->get_ansulta_address_a() == recvPacket[start+2]) && (p_cfg->get_ansulta_address_b() == recvPacket[start+3])) {
           p_led_state = recvPacket[start+4];
           if (p_led_state == OFF) {
             p_brightness = 1;
@@ -232,8 +229,11 @@ void Ansulta::ReadAddressBytes()
     DEBUG_PRINTLN("Ansulta: Listening for an Address ");
     p_first_info = true;
    }
-   
-   while((tries < MAX_LEARN_TRIES) && (!p_address_found)){ //Try to listen for the address 200 times
+
+   bool address_found = false;
+   byte AddressByteA = 0;
+   byte AddressByteB = 0;
+   while((tries < MAX_LEARN_TRIES) && (!address_found)){ //Try to listen for the address 200 times
       p_count_c++;
       if (p_count_c > 80) {
         p_count_c = 0;
@@ -265,7 +265,7 @@ void Ansulta::ReadAddressBytes()
           start++;
         }
         if (recvPacket[start+1] == 0x01 && recvPacket[start+5] == 0xAA){   //If the bytes match an Ikea remote sequence
-          p_address_found = true;
+          address_found = true;
           AddressByteA = recvPacket[start+2];                // Extract the addressbytes
           AddressByteB = recvPacket[start+3];
           p_led_state = recvPacket[start+4];
@@ -281,9 +281,10 @@ void Ansulta::ReadAddressBytes()
       } 
       tries++;  //Another try has passed
    }
-   if (p_address_found) {
+   if (address_found) {
      DEBUG_PRINTLN();
      DEBUG_PRINTLN("Ansulta: detected");
+     p_cfg->save_ansulta_address(AddressByteA, AddressByteB);
    }
 }
 

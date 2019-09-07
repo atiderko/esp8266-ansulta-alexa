@@ -19,8 +19,8 @@ Config::Config()
     device_name = HUE_DEVICE_NAME;
     motion_timeout_sec = MOTION_TIMEOUT;
     max_photo_intensity = MAX_PHOTO_INTENSITY; 
-    pAnsultaAddressA = 0x00;
-    pAnsultaAddressB = 0x00;
+    pAnsultaAddressA = 0;
+    pAnsultaAddressB = 0;
     monitor_photo_intensity = -1;
     monitor_photo_intensity_smooth = -1;
     monitor_light_state = 0;
@@ -125,8 +125,8 @@ void Config::p_convert_cfg_values()
     p_has_motion = strlen(pMotionEnabledPValue) == 0 ? false : atoi(pMotionEnabledPValue);
     motion_timeout_sec = strlen(pMotionTimeoutPValue) == 0 ? MOTION_TIMEOUT : atoi(pMotionTimeoutPValue);
     max_photo_intensity = strlen(pMotionMaxFotoIntensityPValue) == 0 ? MAX_PHOTO_INTENSITY : atoi(pMotionMaxFotoIntensityPValue);
-    pAnsultaAddressA = atoi(pIotParamAnsultaAddressAPValue);
-    pAnsultaAddressB = atoi(pIotParamAnsultaAddressBPValue);
+    pAnsultaAddressA = strlen(pIotParamAnsultaAddressAPValue) == 0 ? 0 : atoi(pIotParamAnsultaAddressAPValue);
+    pAnsultaAddressB = strlen(pIotParamAnsultaAddressBPValue) == 0 ? 0 : atoi(pIotParamAnsultaAddressBPValue);
 }
 
 void Config::loop()
@@ -226,8 +226,8 @@ void Config::save_ansulta_address(byte address_a, byte address_b)
 {
     pAnsultaAddressA = address_a;
     pAnsultaAddressB = address_b;
-    itoa(address_a, pIotParamAnsultaAddressAPValue, 16);
-    itoa(address_b, pIotParamAnsultaAddressBPValue, 16);
+    itoa(address_a, pIotParamAnsultaAddressAPValue, 10);
+    itoa(address_b, pIotParamAnsultaAddressBPValue, 10);
     pIotWebConf->configSave();
 }
 

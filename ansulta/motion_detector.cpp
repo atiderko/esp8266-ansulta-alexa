@@ -15,9 +15,7 @@ This class handles the detected motions.
 
 MotionDetector::MotionDetector() {
     p_ansulta = NULL;
-    p_max_photo_intensity = 100;
-    p_timeout_default = 35000;
-    p_timeout = p_timeout_default;
+    p_timeout = 35000;
     p_md1_pin = D0;
     p_photo_pin = A0;
     p_light_state = Ansulta::OFF;
@@ -33,11 +31,10 @@ MotionDetector::MotionDetector() {
     p_photo_state_smooth = -1;
 }
 
-void MotionDetector::init(Ansulta& ansulta, unsigned long timeout, int max_photo_intensity) {
+void MotionDetector::setup(Ansulta& ansulta, Config& cfg) {
     p_ansulta = &ansulta;
-    p_max_photo_intensity = max_photo_intensity;
-    p_timeout_default = timeout;
-    p_timeout = timeout;
+    p_cfg = &cfg;
+    p_timeout = p_cfg->motion_timeout_sec * 1000;
     pinMode(p_md1_pin, INPUT);
 }
 
@@ -68,6 +65,8 @@ int MotionDetector::loop() {
         }
         p_photo_state_smooth = p_photo_state_smooth * 0.9 + p_photo_state * 0.1;
         p_ts_photo_intensity_mes = current_time;
+        p_cfg->monitor_photo_intensity = p_photo_state;
+        p_cfg->monitor_photo_intensity_smooth = p_photo_state_smooth;
     }
     // handle motion detection
     bool is_on = p_light_state != Ansulta::OFF;
@@ -85,8 +84,8 @@ int MotionDetector::loop() {
           DEBUG_PRINT(", smooth: ");
           DEBUG_PRINT(p_photo_state_smooth);
           DEBUG_PRINTLN();
-          if (p_photo_state_smooth <= p_max_photo_intensity) {
-              if (p_photo_state_smooth < (p_max_photo_intensity / 3)) {
+          if (p_photo_state_smooth <= p_cfg->max_photo_intensity) {
+              if (p_photo_state_smooth < (p_cfg->max_photo_intensity / 3)) {
                   DEBUG_PRINT(" > on 50%");
                   p_ansulta->light_ON_50();
               } else{
@@ -103,7 +102,7 @@ int MotionDetector::loop() {
         if (is_on && (p_md1_ts_detection != 0) && (current_time - p_md1_ts_detection) > p_timeout) {
             p_ansulta->light_OFF();
             // after 1h without detection set to default timout
-            p_timeout = p_timeout_default;
+            p_timeout = p_cfg->motion_timeout_sec * 1000;
         }
     }
     if (md1_state == HIGH && (p_count_detected % 10) == 1) {
@@ -145,7 +144,7 @@ void MotionDetector::light_state_changed(int state, bool by_ansulta_ctrl) {
                 p_count_disable = 0;
                 p_disable_duration = 0;
             }
-            p_timeout = p_timeout_default;
+            p_timeout = p_cfg->motion_timeout_sec * 1000;
             p_light_ts_manual_off = current_ts;
         } else {
             DEBUG_PRINTLN("ON by ctrl, increase timeout for motion detection to 1h");

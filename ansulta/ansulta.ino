@@ -19,7 +19,6 @@ OnBoardLED led;
 Ansulta ansulta;
 MotionDetector motion;
 int motion_state = 0;
-bool saved_ansulta_address = false;
 hue::LightServiceClass lightService(1);
 bool initialized = false;
 
@@ -53,59 +52,45 @@ void loop()
     cfg.loop();
     if (cfg.is_connected()) {
         if (!initialized) {
-            saved_ansulta_address = ansulta.set_address(cfg.get_ansulta_address_a(), cfg.get_ansulta_address_b());
             lightService.begin(cfg.webserver());
             settimeofday_cb(time_is_set);
             // Sync our clock to NTP
             configTime(TZ_SEC, DST_SEC, "pool.ntp.org");
-            ansulta.init();
+            ansulta.setup(cfg);
             DEBUG_PRINTLN("Adding ansulta light switch");
             AnsultaLightHandler* ansulta_handler = new AnsultaLightHandler(&ansulta, &cfg, &led);
             lightService.setLightHandler(0, *ansulta_handler);
-            motion.init(ansulta, cfg.motion_timeout_sec * 1000, cfg.max_photo_intensity);
+            motion.setup(ansulta, cfg);
             ansulta.add_handler(&motion);
             initialized = true;
         }
         lightService.update();
         delay(10);
         if (ansulta.valid_address()) {
-           if (!saved_ansulta_address) {
-              DEBUG_PRINT("ANSULTA ADDR: A");
-              DEBUG_PRINT(ansulta.get_address_a());
-              DEBUG_PRINT(",B:");
-              DEBUG_PRINTLN(ansulta.get_address_b());
-              cfg.save_ansulta_address(ansulta.get_address_a(), ansulta.get_address_b());
-              saved_ansulta_address = true;
-           }
            led.set_connection_state(led.OK);
         } else {
             led.set_connection_state(led.ANSULTA_SEARCHING);
 //            led.set_connection_state(led.OK);  // THIS IS ONLY FOR TEST
         }
-  	} else if (ansulta.valid_address()) {
+  	} else if (initialized && ansulta.valid_address()) {
         led.set_connection_state(led.WIFI_CONNECTING);
-//        delay(100);
   	}
     if (initialized) {
         led.update();
         ansulta.serverLoop();
-        cfg.monitor_light_state = ansulta.get_state();
-    }
-//    delay(10);
-    if (cfg.has_motion()) {
-        int mresult = motion.loop();
-        cfg.monitor_photo_intensity = motion.current_photo_intensity();
-        cfg.monitor_photo_intensity_smooth = motion.current_photo_intensity_smooth();
-        if (motion_state != mresult) {
-            DEBUG_PRINT("Motion state: ");
-            DEBUG_PRINT(mresult);
-            DEBUG_PRINTLN();
-            if (mresult == 1) {
-                led.blink(2, 250);
-            } else if (mresult > 1) {
-                led.blink(mresult, 1000 * mresult);
+        if (cfg.has_motion()) {
+            int mresult = motion.loop();
+            if (motion_state != mresult) {
+                DEBUG_PRINT("Motion state: ");
+                DEBUG_PRINT(mresult);
+                DEBUG_PRINTLN();
+                if (mresult == 1) {
+                    led.blink(2, 250);
+                } else if (mresult > 1) {
+                    led.blink(mresult, 1000 * mresult);
+                }
+                motion_state = mresult;
             }
-            motion_state = mresult;
         }
     }
 }

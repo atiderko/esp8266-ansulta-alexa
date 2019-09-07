@@ -14,22 +14,15 @@ This class handles the detected motions.
 class MotionDetector : public AnsultaCallback {
   public:
     MotionDetector();
-    void init(Ansulta& p_ansulta, unsigned long timeout=20000, int max_photo_intensity=120);
+    void setup(Ansulta& p_ansulta, Config& cfg);
     int loop();
     void light_state_changed(int state, bool by_ansulta_ctrl);
     
     unsigned long msecs();
-    int current_photo_intensity() {
-        return p_photo_state;
-    }
-    int current_photo_intensity_smooth() {
-        return p_photo_state_smooth;
-    }
     
   private:
     Ansulta* p_ansulta;
-    int p_max_photo_intensity;
-    unsigned long p_timeout_default;
+    Config* p_cfg;
     unsigned long p_timeout;
     int p_md1_pin;
     int p_photo_pin;
