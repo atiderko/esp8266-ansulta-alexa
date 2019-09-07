@@ -23,8 +23,8 @@ A cheep solution to control your IKEA OMLOPP and UTRUSTA lights by Amazon's Alex
 - Build and flash the ESP8266. Select - Board:"LONIN(WeMoS) D1 R2 & mini", Upload Speed: "115200", Flash Size: 4M(1M SPIFFS)
 
 ## Configuration
-1. On first start an AP for web configuration portal is launched with SSID "AnsultaAP". Take your smartphone to connect to this AP. Once connected you can select your WiFi enter password and name for device shown in Alexa.
-2. First option: name of the lamp, second option: timeout for motion detection (0: disable), third option: light intensity if motion (PIN: D0) and light (PIN: A0) sensor connected. 
+1. On first start an AP for web configuration portal is launched with SSID "AnsultaAP". Take your smartphone to connect to this AP. Once connected you can configure the your device. After configuration you can reach your device in your local network. The name is "AnsultaAP" or name you entered for "Thing name" parameter.
+2. If you activate motion detection (0: disable), you have to connect motion detector to D0 pin. Motion detector uses light intensity sensor connected to A0 pin. 
 3. After the module is successful connected to WiFi you have to push the button (several times if needed) on your Ansulta Remote Control.
 4. If the address was learned the modules tries to switch them in follow order: 50% - 1s - 100% - 1s - 50% - 1s - OFF.
 > The LED on ESP should be now off and not blink!
