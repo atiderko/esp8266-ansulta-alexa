@@ -23,6 +23,7 @@ Config::Config()
     pAnsultaAddressB = 0x00;
     monitor_photo_intensity = -1;
     monitor_photo_intensity_smooth = -1;
+    monitor_light_state = 0;
     pCharDefaultTimeout = String(MOTION_TIMEOUT);
     pCharDefaultMPI = String(MAX_PHOTO_INTENSITY);
     pServer = new WebServer(80);
@@ -64,10 +65,10 @@ void Config::setup()
         }
     }
     set_flag(RESET_UTC_ADDRESS, RESET_FLAG);
-    delay(500);
+    delay(1500);
     set_flag(RESET_UTC_ADDRESS, RESET_FLAG_CLEAR);
     // -- Initializing the configuration.
-    pIotWebConf->setStatusPin(STATUS_PIN);
+    pIotWebConf->setStatusPin(LED_BUILTIN);
     // scan for WiFi networks and add a select box to the settings
     int numberOfNetworks = WiFi.scanNetworks();
     if (numberOfNetworks > 0) {
@@ -83,7 +84,6 @@ void Config::setup()
     // add settings for motion detection
     pMotionSeparator = IotWebConfSeparator("Motion Detection");
     pMDselectorString = pMDselectorString + "<div class=\"\"><label for=\"mdEnabled\">Enabled: </label><select type=\"text\" id=\"mdEnabled\" name=\"mdEnabled\" maxlength=1 value=\"\"/><option value=\"" + p_has_motion + "\">" + p_has_motion + "</option><option value=\"" + !p_has_motion + "\">" + !p_has_motion + "</option></select></div>";
-    Serial.println(pMDselectorString);
     pMotionEnabled = IotWebConfParameter(NULL, "mdEnabled", pMotionEnabledPValue, NUMBER_LEN, "number", "0,1", 0, pMDselectorString.c_str(), true);
     pMotionTimeout = IotWebConfParameter("Timeout (seconds until off)", "mdTimeout", pMotionTimeoutPValue, NUMBER_LEN, "number", pCharDefaultTimeout.c_str(), pCharDefaultTimeout.c_str(), NULL, true);
     pMotionMaxFotoIntensity = IotWebConfParameter("Max photo intensity", "mdMaxPhotoIntensity", pMotionMaxFotoIntensityPValue, NUMBER_LEN, "number", pCharDefaultMPI.c_str(), pCharDefaultMPI.c_str(), NULL, true);
@@ -115,7 +115,7 @@ void Config::setup()
     
     // -- Set up required URL handlers on the web server.
     pServer->on("/", [&]() { handle_root(); });
-    pServer->on("/config", [&]{ pIotWebConf->handleConfig(); });
+    pServer->on("/devconfig", [&]{ pIotWebConf->handleConfig(); });
     pServer->onNotFound([&](){ pIotWebConf->handleNotFound(); });
 }
 
@@ -142,10 +142,10 @@ void Config::handle_root()
       // -- Captive portal request were already served.
       return;
     }
-    String s = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\" charset=\"UTF-8\"/>";
-    //s += "<title>Alexa ESP8266 Ansulta controller/title></head><body>Alexa ESP8266 Ansulta controller";
+    // <meta name=\"viewport\" http-equiv=\"refresh\" content=\"3\" charset=\"UTF-8\"/>
+    String s = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=yes\" charset=\"UTF-8\"/>";
     s += "<title>Ansulta controller</title></head><body><h1>Alexa ESP8266 Ansulta controller</h1>";
-    s += "<p>AP defaults (user: <i>admin</i> pw: <i>" + String(AP_PASSWORD) + "</i>)</p>";
+    s += "<p>AP defaults (address: <i>" + String(pIotWebConf->getThingName()) + ":80</i> user: <i>admin</i> pw: <i>" + String(AP_PASSWORD) + "</i>)</p>";
     s += "<ul>";
     s += "<li>Current SSID: ";
     if (is_connected()) {
@@ -168,6 +168,16 @@ void Config::handle_root()
     } else {
         s += "disabled";
     }
+    s += "</li><li>Light state: ";
+    if (monitor_light_state == 0) {
+      s += "unknown";
+    } else if (monitor_light_state == 1) {
+      s += "OFF";
+    } else if (monitor_light_state == 2) {
+      s += "ON (50%)";
+    } else if (monitor_light_state == 3) {
+      s += "ON (100%)";
+    }
     s += "</li><li>Ansulta address: ";
     if (pAnsultaAddressA == 0 && pAnsultaAddressB == 0) {
         s += "<b>Waiting for ansulta control signal!</b>";
@@ -179,7 +189,7 @@ void Config::handle_root()
     s += " (smooth: ";
     s += (monitor_photo_intensity_smooth == -1) ? "---" : String(monitor_photo_intensity_smooth);
     s += ")</li></ul>";
-    s += "Go to <a href='config'>configure page</a> to change settings.";
+    s += "Go to <a href='devconfig'>configure page</a> to change settings.";
     s += "</body></html>\n";
     pServer->send(200, "text/html", s);
 }

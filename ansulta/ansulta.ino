@@ -54,7 +54,7 @@ void loop()
     if (cfg.is_connected()) {
         if (!initialized) {
             saved_ansulta_address = ansulta.set_address(cfg.get_ansulta_address_a(), cfg.get_ansulta_address_b());
-            lightService.begin();
+            lightService.begin(cfg.webserver());
             settimeofday_cb(time_is_set);
             // Sync our clock to NTP
             configTime(TZ_SEC, DST_SEC, "pool.ntp.org");
@@ -89,6 +89,7 @@ void loop()
     if (initialized) {
         led.update();
         ansulta.serverLoop();
+        cfg.monitor_light_state = ansulta.get_state();
     }
 //    delay(10);
     if (cfg.has_motion()) {

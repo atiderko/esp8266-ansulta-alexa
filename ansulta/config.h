@@ -17,13 +17,13 @@ https://github.com/datacute/DoubleResetDetector
 #define CONFIG_H
 
 #include <IotWebConf.h>
+#include <ESP8266WebServer.h>
 #define IOTWEBCONF_DEBUG_TO_SERIAL true
 
 // -- Configuration specific key. The value should be modified if config structure was changed.
 #define CONFIG_VERSION "ansulta v2"
 #define STRING_LEN 128
 #define NUMBER_LEN 32
-#define STATUS_PIN LED_BUILTIN
 
 const char ANSULTA_AP[] = "AnsultaAP";
 const char AP_PASSWORD[] = "defaultpw";
@@ -44,6 +44,7 @@ public:
     int max_photo_intensity;
     int monitor_photo_intensity;
     int monitor_photo_intensity_smooth;
+    int monitor_light_state;
     Config();
     ~Config();
     void setup();
@@ -56,6 +57,9 @@ public:
     void save_ansulta_address(byte address_a, byte address_b);
     byte get_ansulta_address_a();
     byte get_ansulta_address_b();
+    ESP8266WebServer* webserver() {
+        return pServer;
+    }
 
 protected:
     byte pAnsultaAddressA;
@@ -67,7 +71,7 @@ protected:
     // web configuration parameter
     DNSServer pDnsServer;
     HTTPUpdateServer pHttpUpdater;
-    WebServer *pServer;
+    ESP8266WebServer *pServer;
     IotWebConf *pIotWebConf;
     String pSSIDselectorString;
     String pMDselectorString;
