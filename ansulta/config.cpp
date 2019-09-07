@@ -68,7 +68,7 @@ void Config::setup()
     delay(1500);
     set_flag(RESET_UTC_ADDRESS, RESET_FLAG_CLEAR);
     // -- Initializing the configuration.
-    pIotWebConf->setStatusPin(LED_BUILTIN);
+    // pIotWebConf->setStatusPin(LED_BUILTIN);
     // scan for WiFi networks and add a select box to the settings
     int numberOfNetworks = WiFi.scanNetworks();
     if (numberOfNetworks > 0) {

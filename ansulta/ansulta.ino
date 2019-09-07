@@ -48,7 +48,7 @@ void setup()
 
 void loop()
 {
-    //led.set_connection_state(led.NOT_CONNECTED);
+    led.set_connection_state(led.NOT_CONNECTED);
     cfg.loop();
     if (cfg.is_connected()) {
         if (!initialized) {
