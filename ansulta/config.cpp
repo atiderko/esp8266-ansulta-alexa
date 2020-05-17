@@ -56,8 +56,8 @@ void Config::setup()
         // double reset press detected
         // delete version tag of IotWebConf to force create new configuration
         DEBUG_PRINTLN("RESET detected, remove configuration");
-        for (byte t = 0; t < IOTWEBCONF_CONFIG_VESION_LENGTH; t++){
-            EEPROM.begin(IOTWEBCONF_CONFIG_START + IOTWEBCONF_CONFIG_VESION_LENGTH);
+        for (byte t = 0; t < IOTWEBCONF_CONFIG_VERSION_LENGTH; t++){
+            EEPROM.begin(IOTWEBCONF_CONFIG_START + IOTWEBCONF_CONFIG_VERSION_LENGTH);
             EEPROM.write(IOTWEBCONF_CONFIG_START + t, 0);
             delay(200);
             EEPROM.commit();
